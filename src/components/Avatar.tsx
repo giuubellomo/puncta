@@ -1,6 +1,8 @@
 import { Pressable, Text, View } from 'react-native';
+import { SvgXml } from 'react-native-svg';
 
 import type { AvatarTipo } from '@/domain/types';
+import { esPersonaje, PROPORCION_PERSONAJE, svgDePersonaje } from '@/theme/personajes';
 import { colorDeAvatar, INICIAL_SOBRE_CLARO, INICIAL_SOBRE_OSCURO } from '@/theme/temas';
 import { crearEstilos, useTema } from '@/theme/tema';
 import { AREA_TOCABLE_MINIMA, BORDE, fuentes } from '@/theme/tokens';
@@ -9,7 +11,7 @@ export type TamanoAvatar = 32 | 40 | 60;
 
 interface Props {
   tipo: AvatarTipo;
-  /** Un color hex si `tipo` es 'color'; el glifo si es 'icono'. */
+  /** Un color hex si `tipo` es 'color'; el glifo o la clave de un personaje si es 'icono'. */
   valor: string;
   /** De aca sale la inicial. */
   nombre: string;
@@ -20,7 +22,7 @@ interface Props {
    */
   onPress?: () => void;
   seleccionado?: boolean;
-  /** Lo que lee el lector de pantalla cuando se puede tocar: «Color gris», «Ícono estrella». */
+  /** Lo que lee el lector de pantalla cuando se puede tocar: «Color 2», «Ícono ★», «Personaje 3». */
   etiqueta?: string;
 }
 
@@ -31,6 +33,7 @@ const ANILLO = 2;
 /**
  * Con color: circulo lleno con la inicial, blanca o negra segun lo oscuro del fondo.
  * Con icono: circulo blanco con borde y el glifo en tinta.
+ * Con personaje (cambio 115): el dibujo solo, sin circulo, del mismo alto.
  * Es decorativo: el nombre siempre esta escrito al lado, asi que el lector de
  * pantalla lo saltea.
  */
@@ -63,6 +66,17 @@ export function Avatar({ onPress, seleccionado = false, etiqueta, ...circulo }: 
 function Circulo({ tipo, valor, nombre, tamano = 40 }: Pick<Props, 'tipo' | 'valor' | 'nombre' | 'tamano'>) {
   const styles = useEstilos();
   const { colores, coloresDeParticipantes } = useTema();
+  if (tipo === 'icono' && esPersonaje(valor)) {
+    return (
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={[styles.circulo, { width: tamano, height: tamano }]}
+      >
+        <SvgXml xml={svgDePersonaje(valor)} width={Math.round(tamano * PROPORCION_PERSONAJE)} height={tamano} />
+      </View>
+    );
+  }
   const esIcono = tipo === 'icono';
   // Un color guardado como numero sigue a la paleta activa (cambio 109).
   const fondo = esIcono ? colores.tarjeta : colorDeAvatar(valor, coloresDeParticipantes);

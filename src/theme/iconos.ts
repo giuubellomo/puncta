@@ -27,9 +27,6 @@ export const iconos = {
   plegar: '▴',
 } as const;
 
-/** Los que se pueden elegir para un avatar (RF-201). `valor` del avatar = el glifo. */
-export const ICONOS_AVATAR = ['★', `☀${TEXTO}`, `☾${TEXTO}`, `♠${TEXTO}`, `♥${TEXTO}`, `♦${TEXTO}`, `♣${TEXTO}`, `♪${TEXTO}`] as const;
-
 /**
  * Los de plantilla. En la base se guarda la clave (`plantilla.icono`), no el glifo:
  * asi el dibujo se puede cambiar sin migrar datos.

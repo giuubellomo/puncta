@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import { LARGO_MAXIMO_NOMBRE, normalizarNombre, validarNombre, type ErrorNombre } from '@/domain/participantes';
 import type { AvatarTipo, Participante } from '@/domain/types';
 import { es } from '@/i18n/es';
-import { ICONOS_AVATAR } from '@/theme/iconos';
+import { PERSONAJES } from '@/theme/personajes';
 import { indiceDeAvatar, valorDeAvatar } from '@/theme/temas';
 import { crearEstilos, useTema } from '@/theme/tema';
 import { espacios, tipografia } from '@/theme/tokens';
@@ -84,8 +84,21 @@ export function FormularioParticipante({ nombresOcupados, textoConfirmar, onConf
       />
 
       <View style={styles.seccion}>
-        <Etiqueta texto={es.participante.iconoOColor} />
+        <Etiqueta texto={es.participante.personajeOColor} />
         <View accessibilityRole="radiogroup" style={styles.avatares}>
+          {/* Los personajes primero, como en la lamina, y despues los colores. Sin los iconos (cambio 116). */}
+          {PERSONAJES.map((personaje, i) => (
+            <Avatar
+              key={personaje}
+              tipo="icono"
+              valor={personaje}
+              nombre={nombre}
+              tamano={40}
+              onPress={() => elegir('icono', personaje)}
+              seleccionado={avatarTipo === 'icono' && avatarValor === personaje}
+              etiqueta={es.participante.personajeNumero(i + 1)}
+            />
+          ))}
           {coloresDeParticipantes.map((color, i) => (
             <Avatar
               key={`${i}-${color}`}
@@ -96,18 +109,6 @@ export function FormularioParticipante({ nombresOcupados, textoConfirmar, onConf
               onPress={() => elegir('color', valorDeAvatar(i))}
               seleccionado={avatarTipo === 'color' && indiceDeAvatar(avatarValor) === i}
               etiqueta={es.participante.colorNumero(i + 1)}
-            />
-          ))}
-          {ICONOS_AVATAR.map((icono) => (
-            <Avatar
-              key={icono}
-              tipo="icono"
-              valor={icono}
-              nombre={nombre}
-              tamano={40}
-              onPress={() => elegir('icono', icono)}
-              seleccionado={avatarTipo === 'icono' && avatarValor === icono}
-              etiqueta={es.participante.icono(icono)}
             />
           ))}
         </View>

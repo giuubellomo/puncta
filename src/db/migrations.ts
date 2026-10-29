@@ -91,6 +91,43 @@ export const MIGRACIONES: Migracion[] = [
         ELSE orden END
       WHERE plantilla_id = '03fac88a-ed58-47bb-95d8-0b758825d952';`,
   },
+  {
+    // Una primera version del cambio 116 se probo en el telefono con este numero
+    // y pasaba los colores a personajes. Al final se quedan los colores y se van
+    // los iconos (migracion 9): esta queda vacia, para que la 9 corra igual en
+    // una base que ya paso por aquella y en una que no.
+    version: 8,
+    nombre: 'reservada',
+    sql: 'SELECT 1;',
+  },
+  {
+    // Cambio 116: los iconos de avatar (★ ☀ ☾ ♠ ♥ ♦ ♣ ♪) ya no se eligen. Cada
+    // participante con icono pasa a un personaje segun su lugar en la lista (el
+    // orden de la pantalla, con los archivados al final), dando la vuelta de a
+    // ocho. Los colores y los personajes no se tocan. Las partidas guardadas
+    // toman el del participante; si ya no existe, el de su lugar en la partida.
+    // Las claves van en el orden de PERSONAJES.
+    version: 9,
+    nombre: 'personajes en lugar de iconos',
+    sql: `CREATE TEMP TABLE personaje_de AS
+        SELECT id, CASE (ROW_NUMBER() OVER (ORDER BY archivado, es_dueno DESC, creado_en, id) - 1) % 8
+          WHEN 0 THEN 'bomba' WHEN 1 THEN 'fiaca' WHEN 2 THEN 'pincho' WHEN 3 THEN 'tembli'
+          WHEN 4 THEN 'mimi' WHEN 5 THEN 'glup' WHEN 6 THEN 'profe' ELSE 'sombra' END AS personaje
+        FROM participante;
+      UPDATE participante
+        SET avatar_valor = (SELECT personaje FROM personaje_de WHERE personaje_de.id = participante.id)
+        WHERE avatar_tipo = 'icono'
+          AND avatar_valor NOT IN ('bomba', 'fiaca', 'pincho', 'tembli', 'mimi', 'glup', 'profe', 'sombra');
+      UPDATE partida_participante
+        SET avatar_valor_snapshot = COALESCE(
+          (SELECT personaje FROM personaje_de WHERE personaje_de.id = partida_participante.participante_id),
+          CASE orden % 8
+          WHEN 0 THEN 'bomba' WHEN 1 THEN 'fiaca' WHEN 2 THEN 'pincho' WHEN 3 THEN 'tembli'
+          WHEN 4 THEN 'mimi' WHEN 5 THEN 'glup' WHEN 6 THEN 'profe' ELSE 'sombra' END)
+        WHERE avatar_tipo_snapshot = 'icono'
+          AND avatar_valor_snapshot NOT IN ('bomba', 'fiaca', 'pincho', 'tembli', 'mimi', 'glup', 'profe', 'sombra');
+      DROP TABLE personaje_de;`,
+  },
 ];
 
 /** La version mas alta que conoce este build. */

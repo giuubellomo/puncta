@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { conSigno, es } from '@/i18n/es';
 import { iconoDePlantilla, iconos } from '@/theme/iconos';
-import { valorDeAvatar } from '@/theme/temas';
+import { PERSONAJES } from '@/theme/personajes';
 import { crearEstilos } from '@/theme/tema';
 import { BORDE, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
 
@@ -22,8 +22,8 @@ export const ILUSTRACIONES = [Podio, Armado, Ronda, Plantilla];
 const ejemplo = es.instructivo.ejemplo;
 const [caro, juan, sofi] = ejemplo.jugadores.map((nombre, i) => ({
   nombre,
-  // El numero de color: el avatar se pinta con la paleta activa, como los de verdad.
-  color: valorDeAvatar(i),
+  // Un personaje cada uno, como los de verdad (cambio 116).
+  personaje: PERSONAJES[i]!,
 }));
 
 /** Como una tarjeta de la app, para que se lea como «un pedazo de pantalla». */
@@ -55,7 +55,7 @@ function Podio() {
         {puestos.map(({ jugador, alto, puesto }) => (
           <View key={jugador.nombre} style={styles.escalon}>
             {puesto === 1 && <Text style={styles.estrella}>★</Text>}
-            <Avatar tipo="color" valor={jugador.color} nombre={jugador.nombre} tamano={40} />
+            <Avatar tipo="icono" valor={jugador.personaje} nombre={jugador.nombre} tamano={40} />
             <Text style={styles.nombreChico}>{jugador.nombre}</Text>
             <View style={[styles.bloque, { height: alto }, puesto === 1 && styles.bloquePrimero]}>
               <Text style={[styles.puesto, puesto === 1 && styles.puestoPrimero]}>{puesto}</Text>
@@ -90,7 +90,7 @@ function Armado() {
       <Rotulo texto={es.nuevaPartida.participantes} />
       <View style={styles.filaJugadores}>
         {[caro!, juan!, sofi!].map((jugador) => (
-          <Avatar key={jugador.nombre} tipo="color" valor={jugador.color} nombre={jugador.nombre} tamano={32} />
+          <Avatar key={jugador.nombre} tipo="icono" valor={jugador.personaje} nombre={jugador.nombre} tamano={32} />
         ))}
         <View style={styles.agregar}>
           <Text style={styles.textoAgregar}>{iconos.mas}</Text>
@@ -116,7 +116,7 @@ function Ronda() {
       </View>
       {filas.map(({ jugador, puntaje, total }) => (
         <View key={jugador.nombre} style={styles.filaRonda}>
-          <Avatar tipo="color" valor={jugador.color} nombre={jugador.nombre} tamano={32} />
+          <Avatar tipo="icono" valor={jugador.personaje} nombre={jugador.nombre} tamano={32} />
           <Text style={styles.nombreRonda}>{jugador.nombre}</Text>
           <View style={[styles.casilla, puntaje === null && styles.casillaVacia]}>
             <Text style={[styles.puntaje, numerales, puntaje === null && styles.apagado]}>

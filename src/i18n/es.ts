@@ -88,7 +88,7 @@ export const es = {
     editarTitulo: 'Editar participante',
     nombre: 'Nombre',
     nombreEjemplo: 'Ej: Sol',
-    iconoOColor: 'Ícono o color',
+    personajeOColor: 'Personaje o color',
     // RF-202: validaciones del alta
     errorNombre: {
       vacio: 'Poné un nombre',
@@ -96,8 +96,9 @@ export const es = {
       repetido: 'Ya hay un participante con ese nombre',
     },
     // Lector de pantalla, en el selector de avatar
+    /** Sin el nombre del personaje: no se muestra en ninguna parte (cambio 115). */
+    personajeNumero: (n: number) => `Personaje ${n}`,
     colorNumero: (n: number) => `Color ${n}`,
-    icono: (glifo: string) => `Ícono ${glifo}`,
   },
 
   /** La lista (paso 5.1). El editor de una plantilla es `plantilla`, mas abajo. */
