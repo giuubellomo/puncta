@@ -45,13 +45,12 @@ export const es = {
     // El nombre de la app: BELIA hasta el cambio 111, de Bellomo + Pardo
     /** El logo va en minuscula, como en la lamina «Identidad y nombre» (cambio 113). */
     titulo: 'puncta',
-    subtitulo: 'Anotador de partidas',
-    continuarPartida: 'Continuar partida',
-    /** «Carioca · 4 jugadores · Ronda 2». El Truco no tiene rondas (cambio 93): «Truco · 2 jugadores». */
-    resumenPartida: (plantilla: string, jugadores: number, ronda: number | null) =>
-      `${plantilla} · ${jugadores} jugadores` + (ronda === null ? '' : ` · Ronda ${ronda}`),
+    subtitulo: 'Para anotar partidas con amigos.',
+    // La tarjeta de la partida abierta, como la lamina (cambio 118)
+    seguir: (nombre: string) => `Seguir: ${nombre}`,
+    /** «Ronda 4 de 7»; con rondas ilimitadas, «Ronda 4». */
+    rondaDe: (ronda: number, total: number | null) => (total === null ? `Ronda ${ronda}` : `Ronda ${ronda} de ${total}`),
     nuevoJuego: 'Nuevo juego',
-    sinPartidas: 'Todavía no tenés partidas guardadas',
     configuracion: 'Configuración',
     /** El mockup dice «Agregar plantilla»; el icono abre la lista (ver registro, cambio 51). */
     plantillas: 'Plantillas',
