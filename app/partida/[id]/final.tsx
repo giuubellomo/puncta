@@ -1,30 +1,59 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
   Easing,
   Platform,
+  Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Svg, { Path } from 'react-native-svg';
 
-import { Avatar } from '@/components/Avatar';
+import { Avatar, type TamanoAvatar } from '@/components/Avatar';
 import { Boton } from '@/components/Boton';
 import { Confeti } from '@/components/Confeti';
 import { rankear, type Puesto } from '@/domain/ranking';
 import type { Participante } from '@/domain/types';
 import { es } from '@/i18n/es';
-import { crearEstilos, useTema } from '@/theme/tema';
-import { espacios, numerales, radios, tipografia } from '@/theme/tokens';
+import * as partidas from '@/repositories/partidas';
+import { crearEstilos, ProveedorDeTema } from '@/theme/tema';
+import { BORDE, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
 import { usePartida } from '@/hooks/usePartida';
 
 /** Alto del escalon segun la posicion: con empate, los que comparten puesto quedan a la misma altura. */
-const ALTO_ESCALON: Record<number, number> = { 1: 150, 2: 105, 3: 75 };
+const ALTO_ESCALON: Record<number, number> = { 1: 160, 2: 112, 3: 84 };
+
+/** El tamaño de quien esta arriba de cada escalon, como en la lamina. */
+const TAMANO_PERSONA: Record<number, TamanoAvatar> = { 1: 88, 2: 56, 3: 48 };
+
+/**
+ * Los colores de la lamina «Podio» (cambio 117), fijos en cualquier tema: el
+ * violeta de fondo, los escalones en sol, chicle y celeste, y la tarjeta blanca
+ * del resto. Lo demas (textos claros, botones, confeti) sale del tema Noche,
+ * que envuelve la pantalla.
+ */
+const PODIO = {
+  /** El violeta electrico y no la noche de la lamina: ahi los personajes, con su borde negro, se perdian. */
+  fondo: '#A52AE6',
+  tinta: '#141118',
+  primero: '#FFD23F',
+  segundo: '#FF4FD8',
+  tercero: '#00C2FF',
+  corona: '#FFD23F',
+  tarjeta: '#FFFFFF',
+  lineaTarjeta: '#DCC3F0',
+  grisTarjeta: '#4F3F5E',
+  /** El circulo del reflector: mas oscuro que el fondo, para que se note que se cierra. */
+  reflector: '#0B0113',
+} as const;
+
+const COLOR_ESCALON: Record<number, string> = { 1: PODIO.primero, 2: PODIO.segundo, 3: PODIO.tercero };
 
 /**
  * La entrada del podio (cambio 105): la pantalla arranca tapada por un circulo
@@ -46,17 +75,31 @@ const ENTRE_APARICIONES = 450;
 const APARICION = 400;
 
 /**
- * Podio (paso 8.2, RF-801 a RF-804, mockup 6). Sale de `rankear()`: los tres
- * primeros del ranking en orden visual 2º–1º–3º y el resto en lista. Con dos
- * participantes no hay escalon vacio (RF-803). Los empatados comparten numero y
- * altura de escalon (RF-804). Sin historial, se ve una sola vez (8.1). Entra
- * animado: escalones, el ganador con confeti, y el resto (cambio 105).
+ * Podio (paso 8.2, RF-801 a RF-804; lamina «Podio» desde el cambio 117). Sale
+ * de `rankear()`: los tres primeros del ranking en orden visual 2º–1º–3º y el
+ * resto en una tarjeta abajo. Con dos participantes no hay escalon vacio
+ * (RF-803). Los empatados comparten numero y altura de escalon (RF-804). Sin
+ * historial, se ve una sola vez (8.1). Entra animado: escalones, el ganador
+ * con confeti, y el resto (cambio 105).
+ *
+ * Siempre en violeta, sea cual sea el tema elegido.
  */
 export default function PantallaDePodio() {
+  return (
+    <ProveedorDeTema inicial="noche">
+      <StatusBar style="light" />
+      <Podio />
+    </ProveedorDeTema>
+  );
+}
+
+function Podio() {
   const styles = useEstilos();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { partida } = usePartida(id);
+  const [armandoRevancha, setArmandoRevancha] = useState(false);
+  const [errorRevancha, setErrorRevancha] = useState(false);
   const puestos = partida === null ? [] : rankear(partida);
   // Los que aparecen despues del ganador, de a uno y en orden de puesto.
   const siguientes = puestos.filter((puesto) => puesto.posicion !== 1).map((puesto) => puesto.participanteId);
@@ -70,14 +113,34 @@ export default function PantallaDePodio() {
   const podio = [segundo, primero, tercero].filter((puesto): puesto is Puesto => puesto !== undefined);
   const resto = puestos.slice(3);
   const participante = (puesto: Puesto) => partida.participantes.find((p) => p.id === puesto.participanteId)!;
+  const ganadores = puestos.filter((puesto) => puesto.posicion === 1).map((puesto) => participante(puesto).nombre);
+
+  // La misma partida otra vez (cambio 117): mismo nombre, plantilla, objetivo y
+  // jugadores. Reemplaza al podio, asi atras sigue siendo el Home.
+  const revancha = async () => {
+    setArmandoRevancha(true);
+    setErrorRevancha(false);
+    try {
+      const nueva = await partidas.crear({
+        nombre: partida.nombre,
+        plantillaId: partida.plantilla.id,
+        participantes: partida.participantes,
+        puntajeObjetivo: partida.plantilla.puntajeObjetivo,
+      });
+      router.replace({ pathname: '/partida/[id]', params: { id: nueva.id } });
+    } catch {
+      setErrorRevancha(true);
+      setArmandoRevancha(false);
+    }
+  };
 
   return (
     <SafeAreaView style={styles.pantalla}>
       <ScrollView contentContainerStyle={styles.contenido}>
         <View style={styles.encabezado}>
-          <Text style={styles.etiqueta}>{es.finalizar.partidaTerminada}</Text>
+          <Text style={styles.etiqueta}>{partida.nombre}</Text>
           <Text accessibilityRole="header" style={styles.titulo}>
-            {partida.nombre}
+            {es.finalizar.gano(ganadores)}
           </Text>
         </View>
 
@@ -96,15 +159,14 @@ export default function PantallaDePodio() {
         </View>
 
         {resto.length > 0 && (
-          <Animated.View style={{ opacity: aparicionDe(resto[0]!.participanteId) }}>
-            {/* Solo una linea, sin titulo (cambio 106). */}
-            <View style={styles.separador} />
-            {resto.map((puesto) => (
+          <Animated.View style={[styles.tarjetaResto, { opacity: aparicionDe(resto[0]!.participanteId) }]}>
+            {resto.map((puesto, i) => (
               <FilaDelResto
                 key={puesto.participanteId}
                 puesto={puesto}
                 participante={participante(puesto)}
                 aparicion={aparicionDe(puesto.participanteId)}
+                primera={i === 0}
               />
             ))}
           </Animated.View>
@@ -112,11 +174,25 @@ export default function PantallaDePodio() {
       </ScrollView>
 
       <Animated.View style={[styles.pie, { opacity: animacion.pie }]}>
+        {errorRevancha && <Text style={styles.error}>{es.finalizar.errorRevancha}</Text>}
+        <Boton
+          titulo={es.finalizar.revancha}
+          variante="destacado"
+          deshabilitado={armandoRevancha}
+          onPress={() => void revancha()}
+        />
         {/* Se llego con replace desde la partida: atras es el Home. */}
-        <Boton titulo={es.finalizar.volverAlInicio} variante="secundario" onPress={() => router.back()} />
+        <Pressable accessibilityRole="link" onPress={() => router.back()} hitSlop={espacios.sm} style={styles.volver}>
+          <Text style={styles.textoVolver}>{es.finalizar.volverAlInicio}</Text>
+        </Pressable>
       </Animated.View>
     </SafeAreaView>
   );
+}
+
+/** Los puntos al lado del nombre, como en la lamina: «Caro · 52», sin el «+». */
+function puntosCortos(total: number): string {
+  return total < 0 ? `−${Math.abs(total)}` : String(total);
 }
 
 /**
@@ -204,13 +280,8 @@ interface PropsEscalon extends PropsPuesto {
   reflector?: { luz: Animated.Value; cierre: Animated.Value };
 }
 
-/** Avatar, nombre y puntos arriba; el escalon con la posicion abajo. */
+/** Avatar (con corona el 1º) y «nombre · puntos» arriba; el escalon con la posicion abajo. */
 function Escalon({ puesto, participante, escalon, persona, confeti, reflector }: PropsEscalon) {
-  const estilosEscalon = useEstilosEscalon();
-  // En modo oscuro el 1º no va en la tinta, que ahi es casi blanca, sino en el tono
-  // oscuro predominante de la paleta (cambio 110).
-  const { modo } = useTema();
-  const oscuro = modo === 'oscuro';
   const styles = useEstilos();
   const { posicion, total } = puesto;
   const esPrimero = posicion === 1;
@@ -229,16 +300,16 @@ function Escalon({ puesto, participante, escalon, persona, confeti, reflector }:
       <View style={styles.lugarDeLaPersona}>
         {reflector !== undefined && <Reflector {...reflector} />}
         <Animated.View style={[styles.persona, aparicion]}>
+          {esPrimero && <Corona />}
           <Avatar
             tipo={participante.avatarTipo}
             valor={participante.avatarValor}
             nombre={participante.nombre}
-            tamano={esPrimero ? 60 : 40}
+            tamano={TAMANO_PERSONA[posicion] ?? TAMANO_PERSONA[3]}
           />
-          <Text style={styles.nombre} numberOfLines={1}>
-            {participante.nombre}
+          <Text style={[styles.nombre, numerales]} numberOfLines={1}>
+            {`${participante.nombre} · ${puntosCortos(total)}`}
           </Text>
-          <Text style={[styles.puntos, numerales]}>{es.comun.puntos(total)}</Text>
         </Animated.View>
         {esPrimero && <Confeti activo={confeti} />}
       </View>
@@ -246,30 +317,34 @@ function Escalon({ puesto, participante, escalon, persona, confeti, reflector }:
         <Animated.View
           style={[
             styles.escalon,
-            posicion === 1
-              ? oscuro
-                ? estilosEscalon.primeroOscuro
-                : estilosEscalon.primero
-              : posicion === 2
-                ? oscuro
-                  ? estilosEscalon.segundoOscuro
-                  : estilosEscalon.segundo
-                : oscuro
-                  ? estilosEscalon.terceroOscuro
-                  : estilosEscalon.tercero,
+            { backgroundColor: COLOR_ESCALON[posicion] ?? PODIO.tercero },
             { height: alto, opacity: escalon, transform: [{ translateY: subida }] },
           ]}
         >
-          <Text style={[styles.numero, esPrimero && !oscuro && styles.numeroPrimero]}>{posicion}</Text>
+          <Text style={[styles.numero, esPrimero && styles.numeroPrimero]}>{posicion}</Text>
         </Animated.View>
       </View>
     </View>
   );
 }
 
+/** La corona del ganador, en sol. */
+function Corona() {
+  return (
+    <Svg width={46} height={32} viewBox="0 0 46 32" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Path
+        d="M4 10 L13 18 L23 4 L33 18 L42 10 L39 29 L7 29 Z"
+        fill={PODIO.corona}
+        stroke={PODIO.tinta}
+        strokeWidth={2.5}
+        strokeLinejoin="round"
+      />
+    </Svg>
+  );
+}
+
 /** El circulo del reflector a escala 1, y lo que queda al final: el lugar del ganador. */
 const LADO_LUZ = 100;
-
 
 /**
  * Un circulo centrado en el lugar del ganador (cambio 105, solo el circulo
@@ -278,7 +353,6 @@ const LADO_LUZ = 100;
  * `luz` lo prende y lo apaga.
  */
 function Reflector({ luz, cierre }: { luz: Animated.Value; cierre: Animated.Value }) {
-  const { modo } = useTema();
   const styles = useEstilos();
   const { width, height } = useWindowDimensions();
   // Desde el ganador hasta la esquina mas lejana entra con la diagonal entera.
@@ -287,7 +361,7 @@ function Reflector({ luz, cierre }: { luz: Animated.Value; cierre: Animated.Valu
   return (
     <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.reflector}>
       <Animated.View
-        style={[styles.luz, modo === 'oscuro' && styles.luzOscura, { opacity: luz, transform: [{ scale: escala }] }]}
+        style={[styles.luz, { opacity: luz, transform: [{ scale: escala }] }]}
       />
     </View>
   );
@@ -296,41 +370,50 @@ function Reflector({ luz, cierre }: { luz: Animated.Value; cierre: Animated.Valu
 interface PropsFila extends PropsPuesto {
   /** De 0 a 1: aparece en su turno, despues del ganador. */
   aparicion: Animated.Value;
+  /** La primera no lleva la raya punteada de arriba. */
+  primera: boolean;
 }
 
-/** Mockup 6: la posicion en un circulo, avatar, nombre y los puntos a la derecha. */
-function FilaDelResto({ puesto, participante, aparicion }: PropsFila) {
+/** La lamina: la posicion, el personaje, el nombre y los puntos a la derecha. */
+function FilaDelResto({ puesto, participante, aparicion, primera }: PropsFila) {
   const styles = useEstilos();
   return (
     <Animated.View
       accessible
       accessibilityLabel={`${es.finalizar.puesto(puesto.posicion)}: ${participante.nombre}, ${es.comun.puntos(puesto.total)}`}
       style={[
-        styles.fila,
         {
           opacity: aparicion,
           transform: [{ translateY: aparicion.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) }],
         },
       ]}
     >
-      <View style={styles.circulo}>
+      {!primera && (
+        // En iOS un borde punteado en un solo lado no se dibuja: se recorta la mitad de un rectangulo punteado.
+        <View style={styles.raya}>
+          <View style={styles.rayaPunteada} />
+        </View>
+      )}
+      <View style={styles.fila}>
         <Text style={[styles.posicionChica, numerales]}>{puesto.posicion}</Text>
+        <Avatar tipo={participante.avatarTipo} valor={participante.avatarValor} nombre={participante.nombre} />
+        <Text style={styles.nombreFila} numberOfLines={1}>
+          {participante.nombre}
+        </Text>
+        <Text style={[styles.puntosFila, numerales]}>{puntosCortos(puesto.total)}</Text>
       </View>
-      <Avatar tipo={participante.avatarTipo} valor={participante.avatarValor} nombre={participante.nombre} />
-      <Text style={styles.nombreFila}>{participante.nombre}</Text>
-      <Text style={[styles.puntosFila, numerales]}>{es.comun.puntos(puesto.total)}</Text>
     </Animated.View>
   );
 }
 
 const useEstilos = crearEstilos((colores) => ({
-  pantalla: { flex: 1, backgroundColor: colores.fondo },
-  contenido: { padding: espacios.xl, gap: espacios.xl },
-  encabezado: { alignItems: 'center', gap: espacios.xxs, paddingTop: espacios.md },
-  etiqueta: { ...tipografia.etiqueta, color: colores.grisMedio },
-  titulo: { ...tipografia.subtitulo, color: colores.tinta, textAlign: 'center' },
-  podio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: espacios.sm },
-  columna: { flex: 1, maxWidth: 110, alignItems: 'center', gap: espacios.xxs },
+  pantalla: { flex: 1, backgroundColor: PODIO.fondo },
+  contenido: { paddingHorizontal: espacios.xl, paddingTop: espacios.lg, paddingBottom: espacios.xl },
+  encabezado: { alignItems: 'center', gap: espacios.xs, marginBottom: espacios.xl },
+  etiqueta: { ...tipografia.etiqueta, color: colores.tinta, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center' },
+  titulo: { ...tipografia.titulo, fontSize: 38, lineHeight: 44, letterSpacing: -1, color: colores.tinta, textAlign: 'center' },
+  podio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: espacios.xs },
+  columna: { flex: 1, maxWidth: 120, alignItems: 'center' },
   // El confeti sale del ganador y tiene que pasar por encima de las otras columnas.
   columnaPrimero: { zIndex: 1 },
   // Por encima del escalon de su columna: el circulo oscuro tiene que tapar tambien el «1» (cambio 108).
@@ -345,59 +428,49 @@ const useEstilos = crearEstilos((colores) => ({
     height: LADO_LUZ,
     borderRadius: LADO_LUZ / 2,
     // Tapa del todo lo de abajo hasta que se cierra (cambio 107).
-    backgroundColor: colores.tinta,
+    backgroundColor: PODIO.reflector,
   },
-  // En modo oscuro, el tono oscuro predominante de la paleta y no la tinta casi blanca (cambio 110).
-  luzOscura: { backgroundColor: colores.linea },
   persona: { alignItems: 'center', gap: espacios.xxs },
   // El escalon sube desde abajo de la base del podio, sin verse por debajo.
   escalonRecorte: { alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-end' },
-  nombre: { ...tipografia.cuerpoFuerte, color: colores.tinta, marginTop: espacios.xxs },
-  puntos: { ...tipografia.chico, color: colores.grisOscuro, marginBottom: espacios.xs },
+  nombre: { ...tipografia.cuerpoFuerte, fontFamily: fuentes.cuerpoBold, color: colores.tinta, marginTop: espacios.xxs, marginBottom: espacios.sm },
   escalon: {
     alignSelf: 'stretch',
     alignItems: 'center',
-    paddingTop: espacios.sm,
-    borderTopLeftRadius: radios.sm,
-    borderTopRightRadius: radios.sm,
+    paddingTop: espacios.md,
+    borderWidth: BORDE,
+    borderBottomWidth: 0,
+    borderColor: PODIO.tinta,
+    borderTopLeftRadius: radios.lg,
+    borderTopRightRadius: radios.lg,
   },
-  numero: { ...tipografia.subtitulo, color: colores.tinta },
-  numeroPrimero: { color: colores.fondo },
-  separador: { height: StyleSheet.hairlineWidth, backgroundColor: colores.linea, marginBottom: espacios.xs },
-  fila: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: espacios.sm,
-    paddingVertical: espacios.sm,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colores.linea,
+  numero: { ...tipografia.numeroGrande, fontSize: 40, lineHeight: 46, color: PODIO.tinta },
+  numeroPrimero: { fontSize: 52, lineHeight: 58 },
+  // La tarjeta del resto tapa el pie de los escalones, como en la lamina.
+  tarjetaResto: {
+    zIndex: 3,
+    marginTop: -espacios.md,
+    paddingHorizontal: espacios.md,
+    paddingVertical: espacios.xs,
+    backgroundColor: PODIO.tarjeta,
+    borderWidth: BORDE,
+    borderColor: PODIO.tinta,
+    borderRadius: radios.lg,
   },
-  circulo: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 1.5,
-    borderColor: colores.linea,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  posicionChica: { ...tipografia.chico, color: colores.grisOscuro },
-  nombreFila: { ...tipografia.cuerpoFuerte, color: colores.tinta, flex: 1 },
-  puntosFila: { ...tipografia.cuerpoFuerte, color: colores.grisOscuro },
+  fila: { flexDirection: 'row', alignItems: 'center', gap: espacios.sm, paddingVertical: espacios.sm },
+  raya: { height: 2, overflow: 'hidden' },
+  rayaPunteada: { height: 6, borderWidth: 2, borderStyle: 'dashed', borderColor: PODIO.lineaTarjeta, borderRadius: 1 },
+  posicionChica: { ...tipografia.tituloChico, color: PODIO.tinta, minWidth: 18 },
+  nombreFila: { ...tipografia.cuerpoFuerte, color: PODIO.tinta, flex: 1 },
+  puntosFila: { ...tipografia.tituloChico, color: PODIO.tinta },
   pie: {
+    alignItems: 'stretch',
+    gap: espacios.sm,
     paddingHorizontal: espacios.xl,
     paddingTop: espacios.md,
     paddingBottom: espacios.md,
   },
-}));
-
-/** 1º en tinta, 2º gris, 3º claro con borde, como el mockup. */
-const useEstilosEscalon = crearEstilos((colores) => ({
-  primero: { backgroundColor: colores.tinta },
-  // Modo oscuro (cambio 110): del tono predominante de la paleta hacia el fondo.
-  primeroOscuro: { backgroundColor: colores.linea },
-  segundoOscuro: { backgroundColor: colores.superficie },
-  terceroOscuro: { backgroundColor: colores.fondo, borderWidth: 1.5, borderBottomWidth: 0, borderColor: colores.linea },
-  segundo: { backgroundColor: colores.linea },
-  tercero: { backgroundColor: colores.superficie, borderWidth: 1.5, borderBottomWidth: 0, borderColor: colores.linea },
+  error: { ...tipografia.chico, color: colores.alerta, textAlign: 'center' },
+  volver: { alignSelf: 'center', paddingVertical: espacios.xs },
+  textoVolver: { ...tipografia.cuerpoFuerte, fontFamily: fuentes.cuerpoBold, color: colores.destacado, textDecorationLine: 'underline' },
 }));

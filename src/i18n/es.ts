@@ -367,7 +367,13 @@ export const es = {
     // RF-710: confirmacion
     confirmarTitulo: '¿Terminar la partida?',
     rondaIncompleta: 'La ronda en curso quedó incompleta.',
-    partidaTerminada: 'Partida terminada',
+    // El titulo del podio (cambio 117): «¡Ganó Caro!», o los empatados en el 1º.
+    gano: (nombres: string[]) =>
+      nombres.length === 1
+        ? `¡Ganó ${nombres[0]}!`
+        : `¡Ganaron ${nombres.slice(0, -1).join(', ')} y ${nombres[nombres.length - 1]}!`,
+    revancha: 'Revancha',
+    errorRevancha: 'No se pudo armar la revancha. Probá de nuevo.',
     // Solo para el lector de pantalla: «Puesto 1: Caro, −55 pts»
     puesto: (n: number) => `Puesto ${n}`,
     volverAlInicio: 'Volver al inicio',

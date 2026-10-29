@@ -7,7 +7,8 @@ import { colorDeAvatar, INICIAL_SOBRE_CLARO, INICIAL_SOBRE_OSCURO } from '@/them
 import { crearEstilos, useTema } from '@/theme/tema';
 import { AREA_TOCABLE_MINIMA, BORDE, fuentes } from '@/theme/tokens';
 
-export type TamanoAvatar = 32 | 40 | 60;
+/** 48, 56 y 88: los del podio (cambio 117). */
+export type TamanoAvatar = 32 | 40 | 48 | 56 | 60 | 88;
 
 interface Props {
   tipo: AvatarTipo;
