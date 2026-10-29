@@ -3,7 +3,7 @@ import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, Vie
 
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { espacios, radios, tipografia } from '@/theme/tokens';
+import { BORDE, espacios, radios, tipografia } from '@/theme/tokens';
 
 import { BotonIcono } from './BotonIcono';
 
@@ -20,6 +20,9 @@ interface Props {
   children: ReactNode;
 }
 
+/** Lo que baja la sombra dura del popup: un poco mas que la de los botones. */
+const SOMBRA_POPUP = 6;
+
 /** Tarjeta centrada sobre un velo oscuro. Para lo corto: alta de participante, carga de puntaje. */
 export function Popup({ visible, onCerrar, etiquetaCerrar, titulo, encabezado, children }: Props) {
   const styles = useEstilos();
@@ -34,19 +37,22 @@ export function Popup({ visible, onCerrar, etiquetaCerrar, titulo, encabezado, c
         style={styles.centro}
         pointerEvents="box-none"
       >
-        <View style={styles.tarjeta} accessibilityViewIsModal>
-          <View style={styles.encabezado}>
-            <View style={styles.encabezadoContenido}>
-              {encabezado ??
-                (titulo !== undefined && (
-                  <Text accessibilityRole="header" style={styles.titulo}>
-                    {titulo}
-                  </Text>
-                ))}
+        <View style={styles.marco}>
+          <View style={styles.sombra} />
+          <View style={styles.tarjeta} accessibilityViewIsModal>
+            <View style={styles.encabezado}>
+              <View style={styles.encabezadoContenido}>
+                {encabezado ??
+                  (titulo !== undefined && (
+                    <Text accessibilityRole="header" style={styles.titulo}>
+                      {titulo}
+                    </Text>
+                  ))}
+              </View>
+              <BotonIcono icono={iconos.cerrar} etiqueta={etiquetaCerrar} tamano={32} onPress={onCerrar} />
             </View>
-            <BotonIcono icono={iconos.cerrar} etiqueta={etiquetaCerrar} tamano={32} onPress={onCerrar} />
+            {children}
           </View>
-          {children}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -56,15 +62,26 @@ export function Popup({ visible, onCerrar, etiquetaCerrar, titulo, encabezado, c
 const useEstilos = crearEstilos((colores) => ({
   velo: { backgroundColor: colores.velo },
   centro: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: espacios.xl },
-  tarjeta: {
-    width: '100%',
-    maxWidth: 380,
-    backgroundColor: colores.fondo,
+  // El marco deja lugar abajo para la sombra dura, que es una capa detras de la tarjeta.
+  marco: { width: '100%', maxWidth: 380, paddingBottom: SOMBRA_POPUP },
+  sombra: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: SOMBRA_POPUP,
+    bottom: 0,
     borderRadius: radios.xl,
+    backgroundColor: colores.borde,
+  },
+  tarjeta: {
+    backgroundColor: colores.tarjeta,
+    borderRadius: radios.xl,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
     padding: espacios.xl,
     gap: espacios.md,
   },
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: espacios.sm },
   encabezadoContenido: { flex: 1 },
-  titulo: { ...tipografia.tituloChico, color: colores.tinta },
+  titulo: { ...tipografia.subtitulo, color: colores.tinta },
 }));

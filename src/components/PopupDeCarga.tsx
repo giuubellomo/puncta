@@ -7,7 +7,7 @@ import type { Participante, Partida, Regla, RondaJugada } from '@/domain/types';
 import { conSigno, es } from '@/i18n/es';
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, espacios, radios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, espacios, fuentes, radios, tipografia } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
 import { AvisoDeObjetivo } from './AvisoDeObjetivo';
@@ -279,14 +279,15 @@ const useEstilos = crearEstilos((colores) => ({
   tilde: {
     width: 28,
     height: 28,
-    borderRadius: radios.xs - 2,
-    borderWidth: 1.5,
-    borderColor: colores.linea,
+    borderRadius: radios.xs - 4,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
+    backgroundColor: colores.tarjeta,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tildeMarcado: { backgroundColor: colores.tinta, borderColor: colores.tinta },
-  tildeTexto: { color: colores.fondo, fontSize: 15, fontWeight: '700' },
-  error: { ...tipografia.secundario, color: colores.tinta, textAlign: 'center' },
+  tildeMarcado: { backgroundColor: colores.destacado },
+  tildeTexto: { color: colores.sobreDestacado, fontSize: 15, fontFamily: fuentes.cuerpoBold },
+  error: { ...tipografia.secundario, color: colores.alerta, textAlign: 'center' },
   ayuda: { ...tipografia.chico, color: colores.grisOscuro, textAlign: 'center' },
 }));

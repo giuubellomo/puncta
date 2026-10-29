@@ -8,7 +8,7 @@ import type { Participante, Partida } from '@/domain/types';
 import { es } from '@/i18n/es';
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, espacios, numerales, radios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, espacios, numerales, radios, tipografia } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
 import { AvisoDeObjetivo } from './AvisoDeObjetivo';
@@ -242,7 +242,7 @@ const useEstilos = crearEstilos((colores) => ({
   conLinea: { borderLeftWidth: 1.5, borderLeftColor: colores.linea },
   marcador: { alignSelf: 'stretch', alignItems: 'center', gap: espacios.xs },
   cabecera: { alignItems: 'center', gap: espacios.xxs, marginBottom: espacios.xs },
-  nombre: { ...tipografia.cuerpoFuerte, color: colores.tinta },
+  nombre: { ...tipografia.tituloChico, color: colores.tinta },
   division: { alignSelf: 'stretch', height: 1.5, backgroundColor: colores.linea, marginVertical: espacios.xs },
   cuadrados: {
     flexDirection: 'row',
@@ -253,7 +253,7 @@ const useEstilos = crearEstilos((colores) => ({
     width: POR_FILA * LADO + (POR_FILA - 1) * SEPARACION,
   },
   palito: { position: 'absolute', backgroundColor: colores.tinta },
-  total: { ...tipografia.subtitulo, color: colores.tinta, marginTop: espacios.xs },
+  total: { ...tipografia.titulo, color: colores.tinta, marginTop: espacios.xs },
   botones: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -265,12 +265,14 @@ const useEstilos = crearEstilos((colores) => ({
     width: AREA_TOCABLE_MINIMA,
     height: AREA_TOCABLE_MINIMA,
     borderRadius: radios.sm,
-    backgroundColor: colores.tinta,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
+    backgroundColor: colores.acento,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  botonRestar: { backgroundColor: colores.fondo, borderWidth: 1.5, borderColor: colores.linea },
-  textoBoton: { ...tipografia.cuerpoFuerte, color: colores.fondo },
+  botonRestar: { backgroundColor: colores.tarjeta },
+  textoBoton: { ...tipografia.boton, color: colores.sobreAcento },
   textoRestar: { color: colores.tinta },
   apagado: { opacity: 0.4 },
   presionado: { opacity: 0.7 },

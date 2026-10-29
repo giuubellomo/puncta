@@ -35,12 +35,12 @@ está escrito para que un agente (Claude Code) lo siga paso a paso, de arriba ha
 
 | | | Versión instalada |
 |---|---|---|
-| Framework | Expo (managed) + React Native | `expo ~57.0.25`, `react-native 0.86.3`, `react 19.2.3` |
+| Framework | Expo (managed) + React Native | `expo ~58.0.21`, `react-native 0.88.0`, `react 19.3.0` |
 | Lenguaje | TypeScript, `strict: true` | `typescript ~6.0.3` |
-| Navegación | expo-router (file-based) | `expo-router ~57.0.23` |
-| Persistencia | expo-sqlite | `expo-sqlite ~57.0.3` |
-| Tests | jest + ts-jest sobre el dominio puro | `jest ~29.7.0`, `ts-jest ^29.4.12` |
-| Pantalla activa | expo-keep-awake | `expo-keep-awake ~57.0.2` |
+| Navegación | expo-router (file-based) | `expo-router ~58.0.28` |
+| Persistencia | expo-sqlite | `expo-sqlite ~58.0.14` |
+| Tests | jest + ts-jest sobre el dominio puro | `jest ~30.5.2`, `ts-jest ^29.4.12` |
+| Pantalla activa | expo-keep-awake | `expo-keep-awake ~58.0.3` |
 
 **Sin backend, sin llamadas de red** (RNF-1). Nada de Firebase, nada de auth en la v1.
 
@@ -51,15 +51,15 @@ No las saques: cada una está acá por una razón concreta.
 
 | Paquete | Versión | Por qué |
 |---|---|---|
-| `react-native-safe-area-context` | `~5.7.0` | Requisito de expo-router. |
-| `react-native-screens` | `~4.26.0` | Requisito de expo-router. |
-| `expo-linking` | `~57.0.11` | Requisito de la guía de instalación de expo-router. |
-| `expo-constants` | `~57.0.19` | Requisito de la guía de instalación de expo-router. |
-| `react-dom` | `19.2.3` | **Pineada a mano.** expo-router arrastra `react-dom@19.3.0`, que exige `react@^19.3.0`, pero el SDK 57 pinea `react@19.2.3`. Sin pinearla, todo `npm install` posterior falla con `ERESOLVE`. |
+| `react-native-safe-area-context` | `~5.10.1` | Requisito de expo-router. |
+| `react-native-screens` | `~4.30.0` | Requisito de expo-router. |
+| `expo-linking` | `~58.0.15` | Requisito de la guía de instalación de expo-router. |
+| `expo-constants` | `~58.0.14` | Requisito de la guía de instalación de expo-router. |
+| `react-dom` | `19.3.0` | **Pineada a mano**, igual a `react`. En SDK 57 expo-router arrastraba una `react-dom` más nueva que la `react` del SDK y todo `npm install` fallaba con `ERESOLVE` (cambio 114). |
 
 **Versiones:** las manda el SDK, no npm. Antes de dar un paso por cerrado corré
-`npx expo install --check`; si se queja, `npx expo install --fix`. Por eso jest quedó en la
-29 y no en la 30: `npm i -D jest` instala la última y el SDK 57 espera `~29.7.0`.
+`npx expo install --check`; si se queja, `npx expo install --fix`. Por eso jest siguió en la
+29 hasta el SDK 57, que esperaba `~29.7.0`; con el SDK 58 pasó a la 30 (cambio 114).
 
 **No hay `babel.config.js`, y no lo crees.** El template de SDK 57 no lo trae a propósito:
 Expo aplica `babel-preset-expo` internamente. Si lo agregás, Metro se rompe con
@@ -1280,7 +1280,7 @@ Durante el paso 5.4 (rondas y ajuste por ronda):
 | 60 | **Cambio de modelo: una regla puede existir en una sola ronda.** `Regla.soloEnRonda?: number` y `regla_plantilla.solo_en_ronda` (migración 2, `NULL` = todas las rondas). Guarda el número de la ronda, sin foreign key: `insertarContenido` valida que la ronda exista. El dominio suma `reglasDeLaRonda`; `reglasSinAsignar`, `marcarRegla` y `puntajeDeReglaEnRonda` la respetan, y el snapshot de la partida la copia. Estas reglas se ven y se editan solo en su ronda, no en «REGLAS · n». | Es la «Regla solo para esta ronda» del mockup, y el modelo no podía expresarla: una regla valía en todas las rondas y el ajuste no puede ser 0. Decisión de la usuaria, con el ejemplo «en la ronda 1 el último en bajar suma 50, en las demás no existe». `schema.sql` no se toca porque es la migración 1. |
 | 61 | Las rondas se reordenan con flechas ↑ ↓, como las reglas (cambio 58). Moverla o borrarla arrastra su objetivo, sus ajustes y sus reglas propias; al borrar, las siguientes bajan un número. | Misma razón que el cambio 58. Decisión de la usuaria. El número de la ronda es su orden (`ronda_plantilla` no tiene `orden`). |
 | 62 | El sheet de la ronda guarda todo recién con GUARDAR RONDA. El ajuste se edita de a 5, entre 5 y 500, con el signo de la regla; si vuelve al base, el ajuste se borra. «Eliminar» va al pie, como en el sheet de regla (cambio 59). Cada regla ajustada dice su base en la fila («ajustado (base −20)»), y la ayuda del pie no nombra un puntaje. En una regla de una sola ronda, «En todas las rondas» se llama «Obligatoria». Sin rondas, la sección explica que se juegan las que quieran. | Los topes de la regla: el ajuste nunca puede ser 0 (`CHECK`). El mockup nombra un solo base en la ayuda y el sheet tiene varias reglas. «En todas las rondas» no tiene sentido en una regla que existe en una sola. |
-| 63 | `expo ~57.0.25`, `expo-linking ~57.0.11`, `expo-router ~57.0.23` (Stack actualizado). | `npx expo install --check` pedía esos parches al cerrar el paso; se corrió `--fix` como indica el Stack. |
+| 63 | `expo ~57.0.25`, `expo-linking ~57.0.11`, `expo-router ~58.0.28` (Stack actualizado). | `npx expo install --check` pedía esos parches al cerrar el paso; se corrió `--fix` como indica el Stack. |
 
 Después del paso 5.4:
 
@@ -1350,3 +1350,5 @@ Durante el paso 7.1 (estructura de la pantalla):
 | 110 | **El podio en modo oscuro va en los tonos de la paleta.** El 1º ya no es la tinta (casi blanca en oscuro) sino `linea`, el tono oscuro predominante (en Verdes, verde oscuro); el 2º, `superficie`; el 3º, el fondo con borde; los números en la tinta. El círculo del reflector, en oscuro, también es `linea`. En claro no cambia nada. | Lo pidió la usuaria: en oscuro el podio se veía blanco. Eligió los tonos de la paleta antes que el color de cada participante. |
 | 111 | **La app se llama Beldo** (de Bellomo + Pardo, los apellidos de la usuaria, como BELIA y DeBello). Cambia lo que se ve: el nombre en el teléfono y en la web (`app.json` `name` y `web.name`, `manifest.json`, `apple-mobile-web-app-title`), «BELDO» en el Home, el instructivo, el aviso de otra pestaña y la versión en Configuración. No cambian a propósito: el nombre de la base (`belia.db`, o la app arrancaría vacía), el candado de la web (`belia-base`), el `slug`, el `scheme` y la dirección de GitHub Pages (`/belia`, que va con el nombre del repositorio). El ícono (una «B») sirve igual. Este archivo y la carpeta del proyecto conservan el nombre BELIA. | Lo pidió la usuaria. Antes de elegirlo se buscó: no hay apps ni marcas llamadas Beldo. |
 | 112 | **La web se mudó a giuubellomo.github.io/beldo/**: la usuaria renombró el repositorio a `beldo`. `experiments.baseUrl`, `start_url` y `scope` del manifest, los enlaces de `index.html` y el comentario del workflow pasan de `/belia` a `/beldo`; el remoto de git apunta al repositorio nuevo. Los datos de la web se conservan, porque el origen (giuubellomo.github.io) es el mismo. La dirección vieja deja de andar: quien la tenía agregada a inicio tiene que agregar la nueva. | Sigue al cambio 111. |
+| 113 | **La app se llama Puncta, con la identidad de las láminas nuevas** (`docs/mockup/`: «Identidad y nombre», «Paleta», «Personajes», «Fondos», «Ronda», «Podio» y la captura del Home). Paso 1 de 3: nombre y base visual. Cambia lo que se ve del nombre: `app.json` (`name`, `web.name`), `manifest.json`, `apple-mobile-web-app-title`, el logo del Home («puncta», en minúscula), el instructivo, el aviso de otra pestaña y la versión. La web pasa a `giuubellomo.github.io/puncta/` (`experiments.baseUrl`, `start_url`, `scope`, enlaces de `index.html` y el workflow): la usuaria renombra el repositorio a `puncta`. Como en el cambio 111, no cambian a propósito `belia.db`, `belia-base`, el `slug` y el `scheme`. **Fuentes** (`@expo-google-fonts`, cargadas en `_layout` antes del primer dibujo): Bricolage Grotesque para logo, títulos, botones y puntajes; DM Sans para el texto. Cada peso es una familia (`fuentes` en `tokens.ts`), así que se sacó todo `fontWeight`. **Tres temas** (`theme/temas.ts`) reemplazan a las nueve paletas y al modo claro/oscuro del cambio 109: Eléctrico (por defecto: planillas lavanda, acento violeta), Noche (el oscuro: fondo noche, acento chicle) y Chicle (acento tinta). Se eligen en Configuración con tarjetas pintadas en los colores de cada uno; se guardan con la clave `tema`, así que quien tenía una paleta arranca en Eléctrico. A los roles de antes se suman `tarjeta`, `borde`, `acento`, `destacado` (sol), `alerta` (coral), `marca` y las formitas. **Estilo**: bordes de 2,5 en el color `borde`, sombra dura sin desenfoque (una capa del color del borde detrás, corrida hacia abajo; se sacó `boxShadow`, sospechoso de que Expo Go se cerrara al abrir la app en iOS), radios más redondos y botones en pastilla que bajan al apretarlos (`Boton`: primario, `destacado` y secundario). Los textos de botones dejan las mayúsculas («Siguiente», «Guardar»). **Fondos lisos**: la lámina «Fondos» proponía formitas tono sobre tono; se probaron y la usuaria pidió sacarlas. Lo elegido va con borde del acento y no relleno de sol, porque en Noche la tinta es blanca. | Lo pidió la usuaria con las láminas nuevas; se iteró antes en una página de muestra. Decidió: solo los tres temas, sin «Hola» ni Historial en el Home, la web en `/puncta` y personajes en lugar de avatares (paso 2), sin mostrar sus nombres. |
+| 114 | **Expo SDK 58** (`expo ~58.0.21`, React Native 0.88, React 19.3), con todas las dependencias en las versiones que pide `expo install --check`; jest pasa a la 30 (ts-jest 29.4 la soporta) y `@types/react` a la 19.3. Por los tipos estrictos de React Native 0.88: `crearEstilos` tipa sus estilos como `StyleSheet.create` (si no, `'row'` o `'center'` quedaban como `string`), y las referencias a un `ScrollView` usan `ScrollViewInstance`. Para que la web siga igual que en SDK 57: `web.output: "single"` (el SDK 58 pasa por defecto a `server`, que Pages no sirve) y `asyncRoutes: { web: false }` en el plugin de expo-router (una sola carga, sin rutas en pedazos). `package-lock.json` se regeneró: sobre el viejo, npm no resolvía el árbol nuevo (`ERESOLVE` con `@expo/ui`). `AGENTS.md` apunta a la doc de v58. | Expo Go en el iPhone de la usuaria se actualizó a SDK 58 y no abre proyectos de SDK 57; en iOS no se puede instalar un Expo Go viejo. Decisión de la usuaria: actualizar antes que probar solo en la web. Era la causa de que Expo Go se cerrara al abrir el proyecto, incluso con la versión de Beldo. |

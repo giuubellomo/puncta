@@ -1,9 +1,9 @@
 import { Pressable, Text, View } from 'react-native';
 
 import type { AvatarTipo } from '@/domain/types';
-import { colorDeAvatar, INICIAL_SOBRE_CLARO, INICIAL_SOBRE_OSCURO } from '@/theme/paletas';
+import { colorDeAvatar, INICIAL_SOBRE_CLARO, INICIAL_SOBRE_OSCURO } from '@/theme/temas';
 import { crearEstilos, useTema } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, fuentes } from '@/theme/tokens';
 
 export type TamanoAvatar = 32 | 40 | 60;
 
@@ -65,7 +65,7 @@ function Circulo({ tipo, valor, nombre, tamano = 40 }: Pick<Props, 'tipo' | 'val
   const { colores, coloresDeParticipantes } = useTema();
   const esIcono = tipo === 'icono';
   // Un color guardado como numero sigue a la paleta activa (cambio 109).
-  const fondo = esIcono ? colores.fondo : colorDeAvatar(valor, coloresDeParticipantes);
+  const fondo = esIcono ? colores.tarjeta : colorDeAvatar(valor, coloresDeParticipantes);
   // La inicial, clara u oscura segun el circulo: no la tinta, que en modo oscuro es clara.
   const tinta = esIcono ? colores.tinta : esOscuro(fondo) ? INICIAL_SOBRE_OSCURO : INICIAL_SOBRE_CLARO;
 
@@ -106,8 +106,8 @@ function esOscuro(hex: string): boolean {
 const useEstilos = crearEstilos((colores) => ({
   circulo: { alignItems: 'center', justifyContent: 'center' },
   anillo: { alignItems: 'center', justifyContent: 'center', borderWidth: ANILLO, borderColor: 'transparent' },
-  anilloSeleccionado: { borderColor: colores.tinta },
+  anilloSeleccionado: { borderColor: colores.acento },
   presionado: { opacity: 0.7 },
-  conBorde: { borderWidth: 1.5, borderColor: colores.tinta },
-  texto: { fontWeight: '700' },
+  conBorde: { borderWidth: BORDE, borderColor: colores.borde },
+  texto: { fontFamily: fuentes.display },
 }));

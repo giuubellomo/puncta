@@ -20,7 +20,7 @@ import { nuevosConRonda } from '@/domain/objetivo';
 import type { Participante, Partida, RondaJugada } from '@/domain/types';
 import { conSigno, es } from '@/i18n/es';
 import { crearEstilos } from '@/theme/tema';
-import { espacios, numerales, tipografia } from '@/theme/tokens';
+import { espacios, fuentes, numerales, tipografia } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
 import { AvisoDeObjetivo } from './AvisoDeObjetivo';
@@ -257,7 +257,7 @@ const useEstilos = crearEstilos((colores) => ({
   filas: { gap: espacios.xs },
   fila: { flexDirection: 'row', alignItems: 'center', gap: espacios.xs, minHeight: 40 },
   tituloFila: { flex: 1 },
-  titulo: { ...tipografia.secundario, fontWeight: '600', color: colores.tinta },
+  titulo: { ...tipografia.secundario, fontFamily: fuentes.cuerpoSemi, color: colores.tinta },
   control: { width: 132 },
   puntos: { ...tipografia.secundario, color: colores.grisOscuro, minWidth: 52, textAlign: 'right' },
   ayuda: { ...tipografia.chico, color: colores.grisOscuro },

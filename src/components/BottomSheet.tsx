@@ -9,6 +9,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   StyleSheet,
   Text,
   View,
@@ -18,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { espacios, radios, tipografia } from '@/theme/tokens';
+import { BORDE, espacios, radios, tipografia } from '@/theme/tokens';
 
 import { BotonIcono } from './BotonIcono';
 
@@ -35,7 +36,7 @@ interface Props {
   /** Algo en lugar de la ✕, como el «Eliminar» de una ronda. */
   accionEncabezado?: ReactNode;
   /** El scroll del contenido, para llevar la vista a una parte (el armado, cambio 95). */
-  scrollRef?: Ref<ScrollView>;
+  scrollRef?: Ref<ScrollViewInstance>;
 }
 
 /** Cuanto hay que bajarlo, o que tan rapido, para que al soltarlo se cierre. */
@@ -168,18 +169,21 @@ const useEstilos = crearEstilos((colores) => ({
   abajo: { flex: 1, justifyContent: 'flex-end' },
   hoja: {
     backgroundColor: colores.fondo,
-    borderTopLeftRadius: radios.xl,
-    borderTopRightRadius: radios.xl,
+    borderTopLeftRadius: radios.xl + 4,
+    borderTopRightRadius: radios.xl + 4,
+    borderWidth: BORDE,
+    borderBottomWidth: 0,
+    borderColor: colores.borde,
     maxHeight: '90%',
   },
   // La manija y el titulo: de donde se lo arrastra. El padding de arriba es parte, asi se agarra mas facil.
   agarre: { paddingTop: espacios.xs },
   manija: {
     alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colores.linea,
+    width: 44,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colores.grisMedio,
     marginBottom: espacios.sm,
   },
   encabezado: {
@@ -190,13 +194,13 @@ const useEstilos = crearEstilos((colores) => ({
     paddingHorizontal: espacios.xl,
     paddingBottom: espacios.sm,
   },
-  titulo: { ...tipografia.subtitulo, color: colores.tinta, flexShrink: 1 },
+  titulo: { ...tipografia.titulo, color: colores.tinta, flexShrink: 1 },
   // Se achica cuando el sheet llega a su tope: el que scrollea es el contenido.
   contenido: { flexGrow: 0, flexShrink: 1 },
   contenidoInterno: { paddingHorizontal: espacios.xl, paddingBottom: espacios.md, gap: espacios.md },
   pie: {
-    borderTopWidth: 1,
-    borderTopColor: colores.superficie,
+    borderTopWidth: 2,
+    borderTopColor: colores.linea,
     paddingHorizontal: espacios.xl,
     paddingTop: espacios.md,
   },

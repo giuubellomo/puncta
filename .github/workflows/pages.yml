@@ -1,5 +1,5 @@
 # Publica la version web en GitHub Pages en cada push a main (fase 10, cambio 88).
-# Queda en https://giuubellomo.github.io/beldo/ (por eso experiments.baseUrl = /beldo).
+# Queda en https://giuubellomo.github.io/puncta/ (por eso experiments.baseUrl = /puncta).
 name: Publicar en GitHub Pages
 
 on:

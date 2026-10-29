@@ -38,12 +38,13 @@ export const es = {
     escribirObjetivo: 'Escribir el objetivo',
     errorGuardar: 'No se pudo guardar. Probá de nuevo.',
     /** Web (cambio 87): la base solo se abre en una pestaña a la vez. */
-    abiertaEnOtraPestana: 'Beldo ya está abierta en otra pestaña. Cerrala y recargá esta.',
+    abiertaEnOtraPestana: 'Puncta ya está abierta en otra pestaña. Cerrala y recargá esta.',
   },
 
   home: {
     // El nombre de la app: BELIA hasta el cambio 111, de Bellomo + Pardo
-    titulo: 'BELDO',
+    /** El logo va en minuscula, como en la lamina «Identidad y nombre» (cambio 113). */
+    titulo: 'puncta',
     subtitulo: 'Anotador de partidas',
     continuarPartida: 'Continuar partida',
     /** «Carioca · 4 jugadores · Ronda 2». El Truco no tiene rondas (cambio 93): «Truco · 2 jugadores». */
@@ -63,7 +64,7 @@ export const es = {
     tipoDeJuego: 'Tipo de juego',
     participantes: 'Participantes',
     agregar: 'Agregar',
-    empezar: 'EMPEZAR',
+    empezar: 'Empezar',
     // El nombre se escribe al armar y es obligatorio (registro, cambio 71)
     nombre: 'Nombre de la partida',
     nombreEjemplo: 'Ej: Viernes de juegos',
@@ -161,11 +162,11 @@ export const es = {
     // Sin rondas definidas la plantilla es de rondas libres (registro, cambio 56)
     ayudaSinRondas: 'Sin rondas definidas se juegan las que quieran, y cada regla vale siempre lo mismo.',
     agregarRonda: 'Agregar ronda',
-    guardar: 'GUARDAR PLANTILLA',
+    guardar: 'Guardar plantilla',
     // Una predefinida se abre para verla; guardar crea una copia (registro, cambio 64)
     verPredefinida: 'Plantilla predefinida',
     ayudaPredefinida: 'Esta plantilla no se modifica. Si cambiás algo, al guardar se crea una copia con tus cambios.',
-    guardarCopia: 'GUARDAR COMO COPIA',
+    guardarCopia: 'Guardar como copia',
   },
 
   regla: {
@@ -195,7 +196,7 @@ export const es = {
     // «¿Cuándo se aplica?» de una regla que es solo de una ronda (paso 5.4)
     obligatoria: 'Obligatoria',
     obligatoriaAyuda: 'Hay que marcársela a alguien para cerrar la ronda',
-    guardar: 'GUARDAR REGLA',
+    guardar: 'Guardar regla',
     // RF-404
     errorTituloVacio: 'Poné un título',
     errorPuntajeCero: 'El puntaje no puede ser cero',
@@ -217,18 +218,18 @@ export const es = {
      */
     ayudaAjuste: (n: number) =>
       `El puntaje que cambies acá vale solo para la Ronda ${n}. En las demás sigue el de la plantilla.`,
-    guardar: 'GUARDAR RONDA',
+    guardar: 'Guardar ronda',
     /** RNF-6, cambio 83. */
     confirmarEliminar: (n: number) => `¿Eliminar la Ronda ${n}?`,
   },
 
   partida: {
     completada: 'Completada',
-    enJuego: 'EN JUEGO',
+    enJuego: 'en juego',
     objetivo: (texto: string) => `Objetivo: ${texto}`,
     bloqueada: (anterior: number) => `Se habilita al terminar la Ronda ${anterior}`,
-    siguiente: 'SIGUIENTE',
-    terminarPartida: 'TERMINAR PARTIDA',
+    siguiente: 'Siguiente',
+    terminarPartida: 'Terminar partida',
     /** Arriba de la ronda, una por pantalla (cambio 100): «Ronda 3 de 7». */
     rondaDeTotal: (ronda: number, total: number) => `Ronda ${ronda} de ${total}`,
     // Solo para el lector de pantalla: las flechas de al lado
@@ -250,7 +251,7 @@ export const es = {
   carga: {
     puntajeDeLaRonda: 'Puntaje de la ronda',
     reglasDeLaRonda: 'Reglas de la ronda',
-    guardar: 'GUARDAR',
+    guardar: 'Guardar',
     /** Debajo del nombre, en el popup: «Ronda 2 · 1 pierna + 1 escalera», o solo «Ronda 2». */
     subtitulo: (ronda: number, objetivo?: string) =>
       objetivo === undefined ? `Ronda ${ronda}` : `Ronda ${ronda} · ${objetivo}`,
@@ -308,7 +309,7 @@ export const es = {
     paginas: [
       {
         titulo: '¡Chau papel y lápiz!',
-        texto: 'Beldo lleva la cuenta por vos: suma, resta y te muestra quién va ganando. Vos preocupate por jugar.',
+        texto: 'Puncta lleva la cuenta por vos: suma, resta y te muestra quién va ganando. Vos preocupate por jugar.',
       },
       {
         titulo: 'Armá la partida en un toque',
@@ -340,36 +341,24 @@ export const es = {
       objetivo: 500,
     },
     saltear: 'Saltear',
-    siguiente: 'SIGUIENTE',
-    empezar: '¡A JUGAR!',
+    siguiente: 'Siguiente',
+    empezar: '¡A jugar!',
     // Solo para el lector de pantalla: «Página 2 de 4»
     pagina: (actual: number, total: number) => `Página ${actual} de ${total}`,
   },
 
-  /** Configuracion (paso 9.1, cambio 82). El tema claro/oscuro llega en fase 2. */
+  /** Configuracion (paso 9.1, cambio 82). El tema, desde el cambio 113. */
   config: {
     comoSeUsa: 'Cómo se usa',
-    // Cambio 109: la paleta y el modo
-    apariencia: 'Apariencia',
-    modo: 'Modo',
-    claro: 'Claro',
-    oscuro: 'Oscuro',
-    automatico: 'Automático',
-    ayudaAutomatico: 'Automático sigue lo que tenga puesto el teléfono.',
-    paleta: 'Paleta',
-    /** Los nombres de las paletas, por su id (`theme/paletas.ts`). */
-    paletas: {
-      monocromo: 'Monocromo',
-      pasteles: 'Pasteles',
-      basicos: 'Básicos',
-      neon: 'Neón',
-      beige: 'Beige',
-      violetas: 'Violetas',
-      azules: 'Azules',
-      verdes: 'Verdes',
-      rosados: 'Rosados',
+    // Cambio 113: los tres temas reemplazan a las paletas y al modo
+    tema: 'Tema',
+    /** Los nombres de los temas, por su id (`theme/temas.ts`). */
+    temas: {
+      electrico: 'Eléctrico',
+      noche: 'Noche',
+      chicle: 'Chicle',
     },
-    version: (version: string) => `Beldo · versión ${version}`,
+    version: (version: string) => `Puncta · versión ${version}`,
     empresa: 'DeBello',
   },
 

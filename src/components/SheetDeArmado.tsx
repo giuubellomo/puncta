@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Keyboard, Pressable, ScrollView, Text, View } from 'react-native';
+import { AccessibilityInfo, Keyboard, Pressable, ScrollView, type ScrollViewInstance, Text, View } from 'react-native';
 
 import { MAXIMO_OBJETIVO, PASO_OBJETIVO } from '@/domain/objetivo';
 import { EQUIPOS_DEL_TRUCO, maximoDeJugadores, MINIMO_JUGADORES, type Faltante } from '@/domain/participantes';
@@ -52,7 +52,7 @@ export function SheetDeArmado({ visible, onCerrar }: Props) {
   // Se tocó EMPEZAR con algo sin completar: desde ahí se marca lo que falta, y
   // cada marca se va sola apenas se completa esa parte.
   const [intento, setIntento] = useState(false);
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   // Dónde arranca cada parte dentro del scroll, para llevar la vista ahí.
   const posiciones = useRef<Partial<Record<'nombre' | 'plantilla' | 'jugadores', number>>>({});
 

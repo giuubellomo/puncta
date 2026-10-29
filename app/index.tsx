@@ -88,7 +88,7 @@ export default function Home() {
         {!cargando && (
           <>
             {partida !== null && <ContinuarPartida partida={partida} />}
-            <Boton titulo={es.home.nuevoJuego} onPress={nuevoJuego} />
+            <Boton titulo={es.home.nuevoJuego} variante="destacado" onPress={nuevoJuego} />
             {partida === null && <Vacio texto={es.home.sinPartidas} />}
           </>
         )}

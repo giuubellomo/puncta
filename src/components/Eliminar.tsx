@@ -3,7 +3,7 @@ import { Keyboard, Pressable, Text, View } from 'react-native';
 
 import { es } from '@/i18n/es';
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, espacios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, espacios, fuentes, tipografia } from '@/theme/tokens';
 
 import { Boton } from './Boton';
 
@@ -59,7 +59,7 @@ export function Eliminar({ pregunta, onEliminar }: Props) {
 
 const useEstilos = crearEstilos((colores) => ({
   eliminar: { minHeight: AREA_TOCABLE_MINIMA, alignItems: 'center', justifyContent: 'center' },
-  eliminarTexto: { ...tipografia.secundario, fontWeight: '700', color: colores.tinta },
+  eliminarTexto: { ...tipografia.secundario, fontFamily: fuentes.cuerpoBold, color: colores.alerta },
   confirmacion: { gap: espacios.sm },
   pregunta: { ...tipografia.cuerpo, color: colores.tinta, textAlign: 'center' },
   botones: { flexDirection: 'row', gap: espacios.sm },

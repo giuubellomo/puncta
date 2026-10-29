@@ -5,7 +5,7 @@ import { LARGO_MAXIMO_NOMBRE, normalizarNombre, validarNombre, type ErrorNombre 
 import type { AvatarTipo, Participante } from '@/domain/types';
 import { es } from '@/i18n/es';
 import { ICONOS_AVATAR } from '@/theme/iconos';
-import { indiceDeAvatar, valorDeAvatar } from '@/theme/paletas';
+import { indiceDeAvatar, valorDeAvatar } from '@/theme/temas';
 import { crearEstilos, useTema } from '@/theme/tema';
 import { espacios, tipografia } from '@/theme/tokens';
 

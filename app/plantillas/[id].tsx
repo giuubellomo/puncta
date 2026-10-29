@@ -379,7 +379,7 @@ const useEstilos = crearEstilos((colores) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cuadradoElegido: { borderColor: colores.tinta, borderWidth: 2, backgroundColor: colores.superficie },
+  cuadradoElegido: { borderColor: colores.acento, borderWidth: 3, backgroundColor: colores.tarjeta },
   glifo: { fontSize: 22, color: colores.tinta },
   // La flechita que avisa que el icono elegido se toca para cambiarlo.
   desplegar: { position: 'absolute', right: 3, bottom: 1, fontSize: 10, color: colores.grisMedio },

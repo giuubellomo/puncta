@@ -13,7 +13,7 @@ import * as plantillas from '@/repositories/plantillas';
 import type { PlantillaGuardada } from '@/repositories/plantillas';
 import { iconoDePlantilla, iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, espacios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, espacios, fuentes, tipografia } from '@/theme/tokens';
 
 /**
  * Lista de plantillas (paso 5.1, RF-303 a RF-305).
@@ -174,7 +174,7 @@ const useEstilos = crearEstilos((colores) => ({
   },
   accion: { minHeight: AREA_TOCABLE_MINIMA, justifyContent: 'center' },
   accionPresionada: { opacity: 0.6 },
-  accionTexto: { ...tipografia.secundario, fontWeight: '700', color: colores.tinta },
+  accionTexto: { ...tipografia.secundario, fontFamily: fuentes.cuerpoBold, color: colores.tinta },
   textoPopup: { ...tipografia.cuerpo, color: colores.tinta },
   error: { ...tipografia.secundario, color: colores.tinta },
   botonesPopup: { flexDirection: 'row', gap: espacios.sm },

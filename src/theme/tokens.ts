@@ -10,21 +10,23 @@
  */
 import type { TextStyle } from 'react-native';
 
-// Los colores ya no viven aca: los da el tema (`theme/tema.tsx`) segun la paleta
-// y el modo elegidos en Configuracion (cambio 109). Ver `theme/paletas.ts`.
+// Los colores no viven aca: los da el tema (`theme/tema.tsx`) segun el elegido en
+// Configuracion (cambio 113). Ver `theme/temas.ts`.
 
-/** Los cinco radios del mockup. */
+/** Los radios: mas redondos desde la identidad de Puncta (cambio 113). */
 export const radios = {
   /** casillas de puntaje, tilde */
-  xs: 10,
+  xs: 12,
   /** campos de texto, segmented */
-  sm: 12,
-  /** botones */
-  md: 14,
+  sm: 14,
+  /** botones cuadrados, opciones chicas */
+  md: 18,
   /** cards */
-  lg: 16,
+  lg: 20,
   /** popup y bottom sheet */
-  xl: 18,
+  xl: 26,
+  /** botones de texto y chips: una pastilla */
+  pastilla: 999,
 } as const;
 
 
@@ -43,27 +45,58 @@ export const espacios = {
 export const AREA_TOCABLE_MINIMA = 44;
 
 /**
- * Tipografia del sistema: sin fuentes propias, y respetando el tamaño que la
- * usuaria elige en el telefono (RNF-7), asi que ningun texto desactiva el escalado.
- * Unica excepcion: un glifo dentro de un circulo de tamaño fijo (avatar, boton de
- * icono), que si crece se sale del circulo.
+ * Las fuentes de Puncta (cambio 113, lamina «Identidad y nombre»): Bricolage
+ * Grotesque para el logo, los titulos y los puntajes; DM Sans para el texto y los
+ * botones. Se cargan en `app/_layout.tsx` con estos nombres.
+ *
+ * Cada peso es una familia aparte, asi que ningun estilo usa `fontWeight`: con una
+ * fuente propia, iOS y Android lo ignoran o lo simulan engrosando la letra.
+ */
+export const fuentes = {
+  display: 'BricolageGrotesque_800ExtraBold',
+  displayBold: 'BricolageGrotesque_700Bold',
+  cuerpo: 'DMSans_400Regular',
+  cuerpoMedio: 'DMSans_500Medium',
+  cuerpoSemi: 'DMSans_600SemiBold',
+  cuerpoBold: 'DMSans_700Bold',
+} as const;
+
+/**
+ * Respeta el tamaño que la usuaria elige en el telefono (RNF-7), asi que ningun
+ * texto desactiva el escalado. Unica excepcion: un glifo dentro de un circulo de
+ * tamaño fijo (avatar, boton de icono), que si crece se sale del circulo.
  */
 export const tipografia = {
-  /** «BELDO» en el Home. */
-  marca: { fontSize: 40, lineHeight: 46, fontWeight: '800', letterSpacing: 2 },
-  titulo: { fontSize: 28, lineHeight: 34, fontWeight: '700' },
-  subtitulo: { fontSize: 20, lineHeight: 26, fontWeight: '700' },
-  tituloChico: { fontSize: 17, lineHeight: 22, fontWeight: '700' },
-  cuerpo: { fontSize: 16, lineHeight: 22, fontWeight: '400' },
-  cuerpoFuerte: { fontSize: 16, lineHeight: 22, fontWeight: '600' },
-  secundario: { fontSize: 14, lineHeight: 20, fontWeight: '400' },
-  chico: { fontSize: 12, lineHeight: 16, fontWeight: '500' },
+  /** «puncta» en el Home: grande y apretado, como en la lamina. */
+  marca: { fontFamily: fuentes.display, fontSize: 84, lineHeight: 84, letterSpacing: -4.5 },
+  titulo: { fontFamily: fuentes.display, fontSize: 28, lineHeight: 34, letterSpacing: -0.5 },
+  subtitulo: { fontFamily: fuentes.display, fontSize: 20, lineHeight: 26 },
+  tituloChico: { fontFamily: fuentes.display, fontSize: 17, lineHeight: 22 },
+  cuerpo: { fontFamily: fuentes.cuerpo, fontSize: 16, lineHeight: 22 },
+  cuerpoFuerte: { fontFamily: fuentes.cuerpoSemi, fontSize: 16, lineHeight: 22 },
+  secundario: { fontFamily: fuentes.cuerpo, fontSize: 14, lineHeight: 20 },
+  chico: { fontFamily: fuentes.cuerpoMedio, fontSize: 12, lineHeight: 16 },
   /** Titulos de seccion: «TIPO DE JUEGO», «NOMBRE». Las mayusculas las pone el estilo. */
-  etiqueta: { fontSize: 12, lineHeight: 16, fontWeight: '600', letterSpacing: 1, textTransform: 'uppercase' },
-  boton: { fontSize: 16, lineHeight: 20, fontWeight: '700' },
+  etiqueta: {
+    fontFamily: fuentes.cuerpoBold,
+    fontSize: 12,
+    lineHeight: 16,
+    letterSpacing: 1.4,
+    textTransform: 'uppercase',
+  },
+  boton: { fontFamily: fuentes.display, fontSize: 17, lineHeight: 22 },
   /** El numero del stepper grande, en el popup de carga. */
-  numeroGrande: { fontSize: 40, lineHeight: 48, fontWeight: '700' },
+  numeroGrande: { fontFamily: fuentes.display, fontSize: 46, lineHeight: 54, letterSpacing: -1 },
 } as const satisfies Record<string, TextStyle>;
+
+/**
+ * El grosor de los bordes de la identidad nueva, y lo que baja la sombra dura.
+ * La sombra es una capa del color del borde detras del elemento, corrida hacia
+ * abajo. No se usa `boxShadow`: con un radio de pastilla, en iOS era sospechoso
+ * de que Expo Go se cerrara al abrir la app.
+ */
+export const BORDE = 2.5;
+export const SOMBRA = 4;
 
 /**
  * RNF-4: todo puntaje va con numerales tabulares, para que las columnas no

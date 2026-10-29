@@ -5,7 +5,7 @@ import type { Plantilla, RondaDefinida } from '@/domain/types';
 import { conSigno, es } from '@/i18n/es';
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { espacios, numerales, tipografia } from '@/theme/tokens';
+import { espacios, fuentes, numerales, tipografia } from '@/theme/tokens';
 
 import { BotonIcono } from './BotonIcono';
 import { Card } from './Card';
@@ -128,12 +128,12 @@ const useEstilos = crearEstilos((colores) => ({
     minWidth: 24,
     height: 24,
     paddingHorizontal: espacios.xxs,
-    borderRadius: 6,
-    backgroundColor: colores.tinta,
+    borderRadius: 8,
+    backgroundColor: colores.acento,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  numeroTexto: { ...tipografia.chico, fontWeight: '700', color: colores.fondo },
+  numeroTexto: { ...tipografia.chico, fontFamily: fuentes.display, color: colores.sobreAcento },
   objetivo: { ...tipografia.cuerpoFuerte, color: colores.tinta, flexShrink: 1 },
   sinObjetivo: { color: colores.grisMedio },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: espacios.xxs },

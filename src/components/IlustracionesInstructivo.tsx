@@ -3,9 +3,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { conSigno, es } from '@/i18n/es';
 import { iconoDePlantilla, iconos } from '@/theme/iconos';
-import { valorDeAvatar } from '@/theme/paletas';
+import { valorDeAvatar } from '@/theme/temas';
 import { crearEstilos } from '@/theme/tema';
-import { espacios, numerales, radios, tipografia } from '@/theme/tokens';
+import { BORDE, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
 import { Chip } from './Chip';
@@ -167,9 +167,9 @@ const useEstilos = crearEstilos((colores) => ({
     gap: espacios.xs,
     padding: espacios.md,
     borderRadius: radios.xl,
-    borderWidth: 1.5,
-    borderColor: colores.linea,
-    backgroundColor: colores.fondo,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
+    backgroundColor: colores.tarjeta,
   },
   rotulo: { ...tipografia.etiqueta, color: colores.grisMedio, marginTop: espacios.xxs },
   nombreChico: { ...tipografia.chico, color: colores.grisOscuro },
@@ -186,9 +186,9 @@ const useEstilos = crearEstilos((colores) => ({
     alignItems: 'center',
     paddingTop: espacios.xs,
   },
-  bloquePrimero: { backgroundColor: colores.tinta },
+  bloquePrimero: { backgroundColor: colores.destacado },
   puesto: { ...tipografia.tituloChico, color: colores.grisOscuro },
-  puestoPrimero: { color: colores.fondo },
+  puestoPrimero: { color: colores.sobreDestacado },
 
   campo: {
     borderWidth: 1.5,
@@ -208,7 +208,7 @@ const useEstilos = crearEstilos((colores) => ({
     borderWidth: 1.5,
     borderColor: colores.linea,
   },
-  juegoElegido: { borderColor: colores.tinta, borderWidth: 2, backgroundColor: colores.superficie },
+  juegoElegido: { borderColor: colores.acento, borderWidth: 3, backgroundColor: colores.tarjeta },
   glifoJuego: { fontSize: 18, color: colores.tinta },
   filaJugadores: { flexDirection: 'row', gap: espacios.xs, alignItems: 'center' },
   agregar: {
@@ -233,7 +233,7 @@ const useEstilos = crearEstilos((colores) => ({
   },
   tituloRonda: { ...tipografia.tituloChico, color: colores.tinta },
   filaRonda: { flexDirection: 'row', alignItems: 'center', gap: espacios.xs, paddingVertical: 2 },
-  nombreRonda: { ...tipografia.secundario, fontWeight: '600', color: colores.tinta, flex: 1 },
+  nombreRonda: { ...tipografia.secundario, fontFamily: fuentes.cuerpoSemi, color: colores.tinta, flex: 1 },
   casilla: {
     minWidth: 52,
     alignItems: 'center',
@@ -243,13 +243,13 @@ const useEstilos = crearEstilos((colores) => ({
     borderColor: colores.tinta,
   },
   casillaVacia: { borderStyle: 'dashed', borderColor: colores.linea },
-  puntaje: { ...tipografia.secundario, fontWeight: '600', color: colores.tinta },
+  puntaje: { ...tipografia.secundario, fontFamily: fuentes.display, color: colores.tinta },
   total: { ...tipografia.chico, color: colores.grisOscuro, minWidth: 30, textAlign: 'right' },
   mano: { position: 'absolute', right: 34, bottom: -14, fontSize: 22, color: colores.tinta },
 
   regla: { flexDirection: 'row', alignItems: 'center', gap: espacios.xs, paddingVertical: 2 },
   punto: { width: 6, height: 6, borderRadius: 3, backgroundColor: colores.tinta },
-  nombreRegla: { ...tipografia.secundario, fontWeight: '600', color: colores.tinta, flex: 1 },
+  nombreRegla: { ...tipografia.secundario, fontFamily: fuentes.cuerpoSemi, color: colores.tinta, flex: 1 },
   objetivo: {
     flexDirection: 'row',
     alignItems: 'center',

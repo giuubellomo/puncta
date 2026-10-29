@@ -1,3 +1,9 @@
+import {
+  BricolageGrotesque_700Bold,
+  BricolageGrotesque_800ExtraBold,
+} from '@expo-google-fonts/bricolage-grotesque';
+import { DMSans_400Regular, DMSans_500Medium, DMSans_600SemiBold, DMSans_700Bold } from '@expo-google-fonts/dm-sans';
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
@@ -6,15 +12,9 @@ import { Text, View } from 'react-native';
 import { esBaseAbiertaEnOtraPestana } from '@/db/client';
 import { sembrar } from '@/db/seed';
 import { es } from '@/i18n/es';
-import { PALETA_POR_DEFECTO } from '@/theme/paletas';
-import {
-  crearEstilos,
-  leerPreferenciasDeTema,
-  ProveedorDeTema,
-  useTema,
-  type PreferenciasDeTema,
-} from '@/theme/tema';
-import { espacios, tipografia } from '@/theme/tokens';
+import { crearEstilos, leerTemaGuardado, ProveedorDeTema, useTema } from '@/theme/tema';
+import { TEMA_POR_DEFECTO, type IdTema } from '@/theme/temas';
+import { espacios, fuentes, tipografia } from '@/theme/tokens';
 
 /**
  * El Home queda siempre debajo en la pila, aunque se entre directo a otra ruta.
@@ -24,29 +24,40 @@ import { espacios, tipografia } from '@/theme/tokens';
  */
 export const unstable_settings = { anchor: 'index' };
 
-/** Si la base no abre, el aviso se ve con la paleta de siempre. */
-const PREFERENCIAS_DE_RESPALDO: PreferenciasDeTema = { paleta: PALETA_POR_DEFECTO, modo: 'automatico' };
 
 /**
  * Antes de montar cualquier pantalla se siembran las plantillas predefinidas
  * (paso 2.4). Asi ninguna pantalla lee la base antes de que esten. Tambien se
- * leen la paleta y el modo elegidos (cambio 109): la app arranca ya con ellos.
+ * lee el tema elegido (cambio 113): la app arranca ya con el. Y se cargan las
+ * fuentes: sin ellas, el primer dibujo saldria con la del sistema.
  */
 export default function RootLayout() {
-  const [preferencias, setPreferencias] = useState<PreferenciasDeTema | null>(null);
+  const [tema, setTema] = useState<IdTema | null>(null);
   const [error, setError] = useState<unknown>(null);
+  // Si una fuente no carga, la app sigue con la del sistema: no vale la pena trabarla.
+  const [fuentesCargadas, errorDeFuentes] = useFonts({
+    BricolageGrotesque_700Bold,
+    BricolageGrotesque_800ExtraBold,
+    DMSans_400Regular,
+    DMSans_500Medium,
+    DMSans_600SemiBold,
+    DMSans_700Bold,
+  });
+  const fuentesListas = fuentesCargadas || errorDeFuentes !== null;
 
   useEffect(() => {
     sembrar()
-      .then(leerPreferenciasDeTema)
-      .then(setPreferencias)
+      .then(leerTemaGuardado)
+      .then(setTema)
       .catch((e: unknown) => setError(e ?? 'Error'));
   }, []);
+
+  if (!fuentesListas) return null;
 
   // En web, la app ya abierta en otra pestaña: un aviso para la usuaria, no un error.
   if (error !== null && esBaseAbiertaEnOtraPestana(error)) {
     return (
-      <ProveedorDeTema inicial={PREFERENCIAS_DE_RESPALDO}>
+      <ProveedorDeTema inicial={TEMA_POR_DEFECTO}>
         <PantallaError mensaje={es.comun.abiertaEnOtraPestana} />
       </ProveedorDeTema>
     );
@@ -54,17 +65,17 @@ export default function RootLayout() {
   // Diagnostico de desarrollo: si la semilla falla, la app no sirve y hay que verlo.
   if (error !== null) {
     return (
-      <ProveedorDeTema inicial={PREFERENCIAS_DE_RESPALDO}>
+      <ProveedorDeTema inicial={TEMA_POR_DEFECTO}>
         <PantallaError mensaje={String(error)} />
       </ProveedorDeTema>
     );
   }
 
   // Es un instante: unas lecturas y, solo la primera vez, unas inserciones.
-  if (preferencias === null) return null;
+  if (tema === null) return null;
 
   return (
-    <ProveedorDeTema inicial={preferencias}>
+    <ProveedorDeTema inicial={tema}>
       <Navegacion />
     </ProveedorDeTema>
   );
@@ -78,13 +89,13 @@ function Navegacion() {
   const { colores, modo } = useTema();
   return (
     <>
-      {/* La barra de arriba del telefono, legible sobre el fondo de la paleta (cambio 109). */}
+      {/* La barra de arriba del telefono, legible sobre el fondo del tema (cambio 113). */}
       <StatusBar style={modo === 'oscuro' ? 'light' : 'dark'} />
       <Stack
         screenOptions={{
           headerStyle: { backgroundColor: colores.fondo },
           headerTintColor: colores.tinta,
-          headerTitleStyle: { color: colores.tinta },
+          headerTitleStyle: { color: colores.tinta, fontFamily: fuentes.display },
           headerShadowVisible: false,
           contentStyle: { backgroundColor: colores.fondo },
         }}

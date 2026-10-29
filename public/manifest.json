@@ -1,9 +1,9 @@
 {
-  "name": "Beldo",
-  "short_name": "Beldo",
+  "name": "Puncta",
+  "short_name": "Puncta",
   "description": "Anotador de partidas",
   "lang": "es",
-  "start_url": "/beldo/",
+  "start_url": "/puncta/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",
@@ -20,5 +20,5 @@
       "type": "image/png"
     }
   ],
-  "scope": "/beldo/"
+  "scope": "/puncta/"
 }

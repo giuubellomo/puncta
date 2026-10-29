@@ -1,74 +1,54 @@
 import { createContext, useContext, useMemo, useState, type ReactNode } from 'react';
-import { StyleSheet, useColorScheme } from 'react-native';
+import { StyleSheet, type ImageStyle, type TextStyle, type ViewStyle } from 'react-native';
 
 import * as ajustes from '@/repositories/ajustes';
 
-import { paletaPorId, PALETA_POR_DEFECTO, type Colores, type IdPaleta, type Modo } from './paletas';
+import { COLORES_DE_PARTICIPANTES, temaPorId, TEMA_POR_DEFECTO, type Colores, type IdTema, type Modo } from './temas';
 
-/** Lo que se elige en Configuracion: automatico sigue al telefono. */
-export type ModoElegido = Modo | 'automatico';
-
-const CLAVE_PALETA = 'paleta';
-const CLAVE_MODO = 'modo';
-const MODOS: readonly ModoElegido[] = ['claro', 'oscuro', 'automatico'];
+/**
+ * Una clave nueva: la `paleta` del cambio 109 queda guardada pero ya no se lee,
+ * asi que quien venia con una paleta arranca en Electrico.
+ */
+const CLAVE_TEMA = 'tema';
 
 export interface Tema {
   colores: Colores;
-  /** Los colores para elegir de los participantes, con la paleta y el modo activos. */
+  /** Los colores para elegir de los participantes. */
   coloresDeParticipantes: readonly string[];
-  /** El modo que se ve: el elegido, o el del telefono si es automatico. */
+  /** Noche es oscuro; los otros, claros. Para la barra del telefono y el teclado. */
   modo: Modo;
-  paleta: IdPaleta;
-  modoElegido: ModoElegido;
+  tema: IdTema;
   /** Cambia en vivo y lo guarda. Si no se puede guardar, igual se ve mientras dure la app. */
-  cambiarPaleta: (paleta: IdPaleta) => void;
-  cambiarModo: (modo: ModoElegido) => void;
+  cambiarTema: (tema: IdTema) => void;
 }
 
 const ContextoDeTema = createContext<Tema | null>(null);
 
-export interface PreferenciasDeTema {
-  paleta: IdPaleta;
-  modo: ModoElegido;
-}
-
-/** Lo guardado, para arrancar ya con la paleta elegida y sin un parpadeo de la de siempre. */
-export async function leerPreferenciasDeTema(): Promise<PreferenciasDeTema> {
-  const [paleta, modo] = await Promise.all([ajustes.leerAjuste(CLAVE_PALETA), ajustes.leerAjuste(CLAVE_MODO)]);
-  return {
-    paleta: paletaPorId(paleta ?? PALETA_POR_DEFECTO).id,
-    modo: MODOS.includes(modo as ModoElegido) ? (modo as ModoElegido) : 'automatico',
-  };
+/** Lo guardado, para arrancar ya con el tema elegido y sin un parpadeo del de siempre. */
+export async function leerTemaGuardado(): Promise<IdTema> {
+  return temaPorId((await ajustes.leerAjuste(CLAVE_TEMA)) ?? TEMA_POR_DEFECTO).id;
 }
 
 /**
- * Los colores de la app (cambio 109): la paleta y el modo elegidos en
- * Configuracion. Cambiarlos repinta todo en vivo, sin reiniciar.
+ * Los colores de la app (cambio 113): el tema elegido en Configuracion.
+ * Cambiarlo repinta todo en vivo, sin reiniciar.
  */
-export function ProveedorDeTema({ inicial, children }: { inicial: PreferenciasDeTema; children: ReactNode }) {
-  const [paleta, setPaleta] = useState<IdPaleta>(inicial.paleta);
-  const [modoElegido, setModoElegido] = useState<ModoElegido>(inicial.modo);
-  const delTelefono = useColorScheme();
-  const modo: Modo = modoElegido === 'automatico' ? (delTelefono === 'dark' ? 'oscuro' : 'claro') : modoElegido;
+export function ProveedorDeTema({ inicial, children }: { inicial: IdTema; children: ReactNode }) {
+  const [id, setId] = useState<IdTema>(inicial);
 
   const tema = useMemo<Tema>(() => {
-    const elegida = paletaPorId(paleta);
+    const elegido = temaPorId(id);
     return {
-      colores: elegida[modo],
-      coloresDeParticipantes: elegida.participantes[modo],
-      modo,
-      paleta,
-      modoElegido,
-      cambiarPaleta: (nueva) => {
-        setPaleta(nueva);
-        void ajustes.guardarAjuste(CLAVE_PALETA, nueva).catch(() => undefined);
-      },
-      cambiarModo: (nuevo) => {
-        setModoElegido(nuevo);
-        void ajustes.guardarAjuste(CLAVE_MODO, nuevo).catch(() => undefined);
+      colores: elegido.colores,
+      coloresDeParticipantes: COLORES_DE_PARTICIPANTES,
+      modo: elegido.modo,
+      tema: elegido.id,
+      cambiarTema: (nuevo) => {
+        setId(nuevo);
+        void ajustes.guardarAjuste(CLAVE_TEMA, nuevo).catch(() => undefined);
       },
     };
-  }, [paleta, modo, modoElegido]);
+  }, [id]);
 
   return <ContextoDeTema.Provider value={tema}>{children}</ContextoDeTema.Provider>;
 }
@@ -79,15 +59,18 @@ export function useTema(): Tema {
   return tema;
 }
 
+/** Como el argumento de `StyleSheet.create`: el `& Estilos` del parametro tipa los literales ('row', 'center'…). */
+type Estilos = Record<string, ViewStyle | TextStyle | ImageStyle>;
+
 /**
  * Los estilos de un componente en funcion de los colores del tema. Reemplaza al
  * `StyleSheet.create` suelto: se arman una vez por juego de colores y se
- * reusan, asi cambiar de paleta no los recrea en cada dibujo.
+ * reusan, asi cambiar de tema no los recrea en cada dibujo.
  *
  *   const useEstilos = crearEstilos((colores) => ({ texto: { color: colores.tinta } }));
  *   function Componente() { const styles = useEstilos(); ... }
  */
-export function crearEstilos<T extends StyleSheet.NamedStyles<T>>(fabrica: (colores: Colores) => T): () => T {
+export function crearEstilos<T extends Estilos>(fabrica: (colores: Colores) => T & Estilos): () => T {
   const armados = new WeakMap<Colores, T>();
   return function useEstilos(): T {
     const { colores } = useTema();

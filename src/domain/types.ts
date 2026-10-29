@@ -1,5 +1,5 @@
 /**
- * Tipos del dominio de Beldo.
+ * Tipos del dominio de Puncta.
  *
  * TypeScript puro: este archivo no importa React, ni SQLite, ni nada de React Native.
  * Los nombres y los campos estan fijados por el plan (paso 1.1) y no se renombran.

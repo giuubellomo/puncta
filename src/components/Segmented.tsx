@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, espacios, radios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, espacios, fuentes, radios, tipografia } from '@/theme/tokens';
 
 export interface OpcionSegmented<T extends string> {
   valor: T;
@@ -48,9 +48,10 @@ export function Segmented<T extends string>({ opciones, seleccionado, onCambiar,
 const useEstilos = crearEstilos((colores) => ({
   contenedor: {
     flexDirection: 'row',
-    borderWidth: 1.5,
-    borderColor: colores.linea,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
     borderRadius: radios.sm,
+    backgroundColor: colores.tarjeta,
     overflow: 'hidden',
   },
   opcion: {
@@ -61,7 +62,7 @@ const useEstilos = crearEstilos((colores) => ({
     paddingHorizontal: espacios.xs,
   },
   opcionCompacta: { minHeight: AREA_TOCABLE_MINIMA - 12 },
-  opcionActiva: { backgroundColor: colores.tinta },
-  texto: { ...tipografia.secundario, fontWeight: '600', color: colores.grisOscuro, textAlign: 'center' },
-  textoActivo: { color: colores.fondo },
+  opcionActiva: { backgroundColor: colores.destacado },
+  texto: { ...tipografia.secundario, fontFamily: fuentes.cuerpoSemi, color: colores.grisOscuro, textAlign: 'center' },
+  textoActivo: { fontFamily: fuentes.cuerpoBold, color: colores.sobreDestacado },
 }));

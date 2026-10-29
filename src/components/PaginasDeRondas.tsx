@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import {
   ScrollView,
+  type ScrollViewInstance,
   Text,
   View,
   useWindowDimensions,
@@ -41,7 +42,7 @@ interface Props {
 export function PaginasDeRondas({ partida, rondas, onTocarParticipante, onSiguiente }: Props) {
   const styles = useEstilos();
   const { width } = useWindowDimensions();
-  const paginas = useRef<ScrollView>(null);
+  const paginas = useRef<ScrollViewInstance>(null);
   const enCurso = rondas.findIndex((ronda) => ronda.estado === 'en_curso');
   // Sin ronda en juego (se cerro la ultima de rondas fijas), la ultima.
   const inicial = enCurso === -1 ? rondas.length - 1 : enCurso;
@@ -155,6 +156,6 @@ const useEstilos = crearEstilos((colores) => ({
   punto: { width: 7, height: 7, borderRadius: 4, borderWidth: 1.5, borderColor: colores.linea },
   puntoCerrada: { backgroundColor: colores.grisMedio, borderColor: colores.grisMedio },
   puntoEnCurso: { borderColor: colores.tinta },
-  puntoActual: { width: 18, backgroundColor: colores.tinta, borderColor: colores.tinta },
+  puntoActual: { width: 18, backgroundColor: colores.acento, borderColor: colores.borde },
   pagina: { padding: espacios.xl },
 }));

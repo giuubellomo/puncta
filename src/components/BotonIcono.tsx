@@ -1,7 +1,7 @@
 import { Pressable, Text } from 'react-native';
 
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, fuentes } from '@/theme/tokens';
 
 interface Props {
   /** Un glifo de `theme/iconos`. */
@@ -48,12 +48,12 @@ const useEstilos = crearEstilos((colores) => ({
   circulo: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: colores.tinta,
-    backgroundColor: colores.fondo,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
+    backgroundColor: colores.tarjeta,
   },
   deshabilitado: { borderColor: colores.linea },
   presionado: { backgroundColor: colores.superficie },
-  icono: { color: colores.tinta, fontWeight: '500' },
+  icono: { color: colores.tinta, fontFamily: fuentes.cuerpoBold },
   iconoDeshabilitado: { color: colores.linea },
 }));

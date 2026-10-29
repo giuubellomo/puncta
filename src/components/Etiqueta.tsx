@@ -14,5 +14,5 @@ export function Etiqueta({ texto }: { texto: string }) {
 }
 
 const useEstilos = crearEstilos((colores) => ({
-  texto: { ...tipografia.etiqueta, color: colores.grisMedio },
+  texto: { ...tipografia.etiqueta, color: colores.grisOscuro },
 }));

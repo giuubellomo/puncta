@@ -1,7 +1,7 @@
 import { Text, View } from 'react-native';
 
 import { crearEstilos } from '@/theme/tema';
-import { espacios, numerales, tipografia } from '@/theme/tokens';
+import { espacios, fuentes, numerales, tipografia } from '@/theme/tokens';
 
 interface Props {
   /** Sin texto queda solo el valor: la pastilla de puntaje de una regla (5.3). */
@@ -10,7 +10,7 @@ interface Props {
   valor?: string;
   /** ● regla de todas las rondas, ○ regla opcional. */
   punto?: 'lleno' | 'vacio';
-  /** relleno: fondo gris (reglas). borde: fondo blanco con borde (opcionales, «EN JUEGO»). */
+  /** relleno: fondo suave (reglas). borde: de tarjeta con borde (opcionales, «en juego»). */
   variante?: 'relleno' | 'borde';
 }
 
@@ -37,9 +37,9 @@ const useEstilos = crearEstilos((colores) => ({
     borderWidth: 1.5,
   },
   relleno: { backgroundColor: colores.superficie, borderColor: colores.superficie },
-  borde: { backgroundColor: colores.fondo, borderColor: colores.linea },
+  borde: { backgroundColor: colores.tarjeta, borderColor: colores.borde },
   punto: { width: 6, height: 6, borderRadius: 3, backgroundColor: colores.tinta },
   puntoVacio: { backgroundColor: 'transparent', borderWidth: 1, borderColor: colores.grisMedio },
-  texto: { ...tipografia.chico, color: colores.grisOscuro },
-  valor: { ...tipografia.chico, fontWeight: '700', color: colores.tinta },
+  texto: { ...tipografia.chico, fontFamily: fuentes.cuerpoSemi, color: colores.grisOscuro },
+  valor: { ...tipografia.chico, fontFamily: fuentes.display, color: colores.tinta },
 }));

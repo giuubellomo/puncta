@@ -3,6 +3,7 @@ import { useRef, useState } from 'react';
 import {
   Pressable,
   ScrollView,
+  type ScrollViewInstance,
   Text,
   View,
   useWindowDimensions,
@@ -28,7 +29,7 @@ export default function Instructivo() {
   const styles = useEstilos();
   const router = useRouter();
   const { width } = useWindowDimensions();
-  const scroll = useRef<ScrollView>(null);
+  const scroll = useRef<ScrollViewInstance>(null);
   const [actual, setActual] = useState(0);
   const paginas = es.instructivo.paginas;
   const esLaUltima = actual === paginas.length - 1;
@@ -121,5 +122,5 @@ const useEstilos = crearEstilos((colores) => ({
   abajo: { gap: espacios.lg, paddingHorizontal: espacios.xl, paddingBottom: espacios.md },
   puntos: { flexDirection: 'row', justifyContent: 'center', gap: espacios.xs },
   punto: { width: 8, height: 8, borderRadius: 4, backgroundColor: colores.linea },
-  puntoActual: { width: 20, backgroundColor: colores.tinta },
+  puntoActual: { width: 20, backgroundColor: colores.acento },
 }));
