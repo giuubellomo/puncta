@@ -12,10 +12,12 @@ interface Props {
   /** Diametro dibujado. El area tocable nunca baja de 44 (RNF-3). */
   tamano?: number;
   deshabilitado?: boolean;
+  /** El tamaño del glifo; por defecto, casi la mitad del circulo. El engranaje del Home lo lleva mas grande (cambio 130). */
+  tamanoIcono?: number;
 }
 
 /** Boton redondo con borde: cerrar, atras, y los − / + del stepper. */
-export function BotonIcono({ icono, etiqueta, onPress, tamano = 36, deshabilitado = false }: Props) {
+export function BotonIcono({ icono, etiqueta, onPress, tamano = 36, deshabilitado = false, tamanoIcono }: Props) {
   const styles = useEstilos();
   const margen = Math.max(0, (AREA_TOCABLE_MINIMA - tamano) / 2);
 
@@ -36,7 +38,7 @@ export function BotonIcono({ icono, etiqueta, onPress, tamano = 36, deshabilitad
     >
       <Text
         allowFontScaling={false}
-        style={[styles.icono, { fontSize: Math.round(tamano * 0.45) }, deshabilitado && styles.iconoDeshabilitado]}
+        style={[styles.icono, { fontSize: tamanoIcono ?? Math.round(tamano * 0.45) }, deshabilitado && styles.iconoDeshabilitado]}
       >
         {icono}
       </Text>

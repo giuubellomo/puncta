@@ -90,7 +90,8 @@ export default function Home() {
         <BotonIcono
           icono={iconos.engranaje}
           etiqueta={es.home.configuracion}
-          tamano={48}
+          tamano={58}
+          tamanoIcono={34}
           onPress={() => router.push('/config')}
         />
       </View>
@@ -245,7 +246,8 @@ const useEstilos = crearEstilos((colores) => ({
   marca: { marginTop: 2 * espacios.xxl + espacios.md, alignItems: 'center' },
   medio: { flex: 1 },
   // Los botones van abajo, al alcance del pulgar; los personajes llenan lo que sobra.
-  acciones: { gap: espacios.sm, paddingTop: espacios.md },
+  // Cambio 130: un poco mas arriba del borde de abajo.
+  acciones: { gap: espacios.sm, paddingTop: espacios.md, paddingBottom: espacios.xl },
   seguir: {
     gap: espacios.sm,
     paddingVertical: espacios.sm,

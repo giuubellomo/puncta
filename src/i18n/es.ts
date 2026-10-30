@@ -356,11 +356,12 @@ export const es = {
    * Cada pagina lleva un glifo de `theme/iconos`, que elige la pantalla.
    */
   instructivo: {
-    // Cambio 97: con mas animo, y cada pagina con su mini-vista (IlustracionesInstructivo)
+    // Cambio 97: con mas animo, y cada pagina con su mini-vista (IlustracionesInstructivo).
+    // Cambio 130: al dia con el rediseño, la carga que sigue sola, la planilla y compartir.
     paginas: [
       {
         titulo: '¡Chau papel y lápiz!',
-        texto: 'Puncta lleva la cuenta por vos: suma, resta y te muestra quién va ganando. Vos preocupate por jugar.',
+        texto: 'Puncta lleva la cuenta por vos: suma, resta y te muestra quién va ganando. Al final, compartí el podio con el grupo.',
       },
       {
         titulo: 'Armá la partida en un toque',
@@ -368,8 +369,11 @@ export const es = {
       },
       {
         titulo: 'Anotá sin hacer cuentas',
-        texto:
-          'Tocá a cada jugador para cargar sus puntos. La ronda se ordena sola: el que va ganando, siempre arriba.',
+        texto: 'Tocá a un jugador y cargá sus puntos: al guardar, pasa solo al que sigue. Cuando cargaron todos, tocá «Siguiente».',
+      },
+      {
+        titulo: 'Mirá cómo van',
+        texto: 'Con el botón de la planilla ves toda la partida. Si juegan a un puntaje, ves cuánto le falta a cada uno, y una ★ marca a quien llegó.',
       },
       {
         titulo: 'Jugá con las reglas de tu casa',
@@ -390,6 +394,12 @@ export const es = {
         { titulo: 'Cortó', puntos: -10 },
       ],
       objetivo: 500,
+      /** La ronda y la planilla de ejemplo: una partida hasta 100. */
+      hasta: 100,
+      rondas: [
+        [60, 40, 25],
+        [45, 30, null],
+      ],
     },
     saltear: 'Saltear',
     siguiente: 'Siguiente',
