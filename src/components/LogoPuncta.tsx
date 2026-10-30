@@ -1,3 +1,4 @@
+import { View } from 'react-native';
 import Svg, { G, Path } from 'react-native-svg';
 
 import { ALTURA_DEL_LOGO, ANCHO_DEL_LOGO, ESTIRADO_DEL_LOGO, LETRAS_DEL_LOGO } from '@/theme/logo';
@@ -54,34 +55,35 @@ export function LogoPuncta({ ancho }: Props) {
     `translate(${letra.x + dx} ${letra.y + dy}) scale(${letra.ancho} ${letra.alto})`;
   const sombra = Array.from({ length: PASOS_SOMBRA }, (_, k) => (PASOS_SOMBRA - k) / PASOS_SOMBRA);
 
+  // El rol de encabezado va en la caja y no en el Svg: en la web, react-native-svg
+  // con ese rol dibuja un <h1> en lugar de un <svg> y las letras no se ven.
   return (
-    <Svg
-      width={ancho}
-      height={(ancho * CAJA.alto) / CAJA.ancho}
-      viewBox={`${CAJA.x} ${CAJA.y} ${CAJA.ancho} ${CAJA.alto}`}
-      accessible
-      accessibilityRole="header"
-      accessibilityLabel="Puncta"
-    >
-      {LETRAS.map((letra) =>
-        sombra.map((t) => (
-          <Path
-            key={`${letra.letra}-${t}`}
-            d={letra.d}
-            transform={transformar(letra, SOMBRA_X * t, SOMBRA_Y * t)}
-            fill={colores.borde}
-            stroke={colores.borde}
-            strokeWidth={GROSOR}
-            strokeLinejoin="round"
-          />
-        )),
-      )}
-      {LETRAS.map((letra) => (
-        <G key={letra.letra} transform={transformar(letra)}>
-          <Path d={letra.d} fill={colores.borde} stroke={colores.borde} strokeWidth={GROSOR} strokeLinejoin="round" />
-          <Path d={letra.d} fill={colores.logo} />
-        </G>
-      ))}
-    </Svg>
+    <View accessible accessibilityRole="header" accessibilityLabel="Puncta">
+      <Svg
+        width={ancho}
+        height={(ancho * CAJA.alto) / CAJA.ancho}
+        viewBox={`${CAJA.x} ${CAJA.y} ${CAJA.ancho} ${CAJA.alto}`}
+      >
+        {LETRAS.map((letra) =>
+          sombra.map((t) => (
+            <Path
+              key={`${letra.letra}-${t}`}
+              d={letra.d}
+              transform={transformar(letra, SOMBRA_X * t, SOMBRA_Y * t)}
+              fill={colores.borde}
+              stroke={colores.borde}
+              strokeWidth={GROSOR}
+              strokeLinejoin="round"
+            />
+          )),
+        )}
+        {LETRAS.map((letra) => (
+          <G key={letra.letra} transform={transformar(letra)}>
+            <Path d={letra.d} fill={colores.borde} stroke={colores.borde} strokeWidth={GROSOR} strokeLinejoin="round" />
+            <Path d={letra.d} fill={colores.logo} />
+          </G>
+        ))}
+      </Svg>
+    </View>
   );
 }
