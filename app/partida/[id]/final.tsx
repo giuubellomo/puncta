@@ -13,7 +13,6 @@ import {
   Share,
   Text,
   View,
-  useWindowDimensions,
   type HostInstance,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,20 +41,15 @@ const TAMANO_PERSONA: Record<number, TamanoAvatar> = { 1: 88, 2: 56, 3: 48 };
 
 
 /**
- * La entrada del podio (cambio 105): la pantalla arranca tapada por un circulo
- * oscuro (cambio 108: desde el primer cuadro) que se va cerrando sobre el 1
- * mientras suben los escalones. Cuando queda chiquito aparece el ganador y
- * explota el confeti. Mientras cae, aparecen los demas de a uno, en orden de
- * puesto, y al final el boton.
+ * La entrada del podio (cambio 105; sin el circulo del reflector desde el 129):
+ * suben los escalones, aparece el ganador y el confeti explota por toda la
+ * pantalla. Mientras cae, aparecen los demas de a uno, en orden de puesto, y al
+ * final el boton.
  */
 const SUBIDA_ESCALON = 450;
 const ENTRE_ESCALONES = 120;
-/** Lo que se queda tapada la pantalla antes de que el circulo empiece a cerrarse. */
-const PAUSA_TAPADA = 300;
-/** Cuando empiezan a subir los escalones, ya cerrandose el circulo. */
-const ESPERA_ESCALONES = 250;
-const CIERRE_REFLECTOR = 1600;
-const APAGADO_REFLECTOR = 250;
+/** Lo que espera la pantalla, con el titulo solo, antes de que suban los escalones. */
+const PAUSA_INICIAL = 300;
 const PAUSA_ANTES_DEL_RESTO = 600;
 const ENTRE_APARICIONES = 450;
 const APARICION = 400;
@@ -196,8 +190,6 @@ function Podio() {
               participante={participante(puesto)}
               escalon={animacion.escalones[i]!}
               persona={puesto.posicion === 1 ? animacion.ganador : aparicionDe(puesto.participanteId)}
-              confeti={animacion.confeti && puesto.posicion === 1}
-              reflector={puesto.posicion === 1 ? animacion.reflector : undefined}
             />
           ))}
         </View>
@@ -231,6 +223,8 @@ function Podio() {
           <Text style={styles.textoVolver}>{es.finalizar.volverAlInicio}</Text>
         </Pressable>
       </Animated.View>
+      {/* Cambio 129: por toda la pantalla, encima de todo. */}
+      <Confeti activo={animacion.confeti} />
     </SafeAreaView>
   );
 }
@@ -280,10 +274,6 @@ function useEntradaDelPodio(lista: boolean, siguientes: number) {
   const escalones = useRef([0, 1, 2].map(() => new Animated.Value(0))).current;
   const ganador = useRef(new Animated.Value(0)).current;
   const pie = useRef(new Animated.Value(0)).current;
-  // Reflector: `luz` lo prende y lo apaga, `cierre` lo achica de 0 (abierto) a 1 (chiquito).
-  // Arranca prendido: la pantalla no se ve ni un cuadro antes que el circulo.
-  const luz = useRef(new Animated.Value(1)).current;
-  const cierre = useRef(new Animated.Value(0)).current;
   // Uno por cada participante que aparece despues del ganador. Se crean al saber cuantos son.
   const apariciones = useRef<Animated.Value[]>([]).current;
   while (apariciones.length < siguientes) apariciones.push(new Animated.Value(0));
@@ -304,25 +294,15 @@ function useEntradaDelPodio(lista: boolean, siguientes: number) {
         if (!vigente) return;
         if (reducir) {
           [...escalones, ganador, pie, ...apariciones].forEach((valor) => valor.setValue(1));
-          luz.setValue(0);
           return;
         }
         Animated.sequence([
-          Animated.delay(PAUSA_TAPADA),
-          Animated.parallel([
-            hasta(cierre, CIERRE_REFLECTOR, Easing.inOut(Easing.cubic)),
-            Animated.sequence([
-              Animated.delay(ESPERA_ESCALONES),
-              Animated.stagger(ENTRE_ESCALONES, escalones.map((valor) => hasta(valor, SUBIDA_ESCALON))),
-            ]),
-          ]),
+          Animated.delay(PAUSA_INICIAL),
+          Animated.stagger(ENTRE_ESCALONES, escalones.map((valor) => hasta(valor, SUBIDA_ESCALON))),
         ]).start(() => {
           if (!vigente) return;
           setConfeti(true);
-          Animated.parallel([
-            hasta(luz, APAGADO_REFLECTOR, Easing.out(Easing.quad), 0),
-            Animated.spring(ganador, { toValue: 1, friction: 5, tension: 80, useNativeDriver: nativo }),
-          ]).start();
+          Animated.spring(ganador, { toValue: 1, friction: 5, tension: 80, useNativeDriver: nativo }).start();
           // Mientras cae el confeti, los demas de a uno, y al final el boton.
           Animated.sequence([
             Animated.delay(PAUSA_ANTES_DEL_RESTO),
@@ -334,9 +314,9 @@ function useEntradaDelPodio(lista: boolean, siguientes: number) {
     return () => {
       vigente = false;
     };
-  }, [lista, escalones, ganador, pie, luz, cierre, apariciones]);
+  }, [lista, escalones, ganador, pie, apariciones]);
 
-  return { escalones, ganador, pie, apariciones, reflector: { luz, cierre }, confeti };
+  return { escalones, ganador, pie, apariciones, confeti };
 }
 
 interface PropsPuesto {
@@ -349,14 +329,10 @@ interface PropsEscalon extends PropsPuesto {
   escalon: Animated.Value;
   /** De 0 a 1: aparece quien esta arriba (con rebote si es el ganador). */
   persona: Animated.Value;
-  /** El ganador, cuando le toca: explota el confeti desde su nombre. */
-  confeti: boolean;
-  /** Solo el ganador: el reflector que lo apunta antes de aparecer. */
-  reflector?: { luz: Animated.Value; cierre: Animated.Value };
 }
 
 /** Avatar (con corona el 1º) y «nombre · puntos» arriba; el escalon con la posicion abajo. */
-function Escalon({ puesto, participante, escalon, persona, confeti, reflector }: PropsEscalon) {
+function Escalon({ puesto, participante, escalon, persona }: PropsEscalon) {
   const styles = useEstilos();
   const { posicion, total } = puesto;
   const esPrimero = posicion === 1;
@@ -371,9 +347,7 @@ function Escalon({ puesto, participante, escalon, persona, confeti, reflector }:
       accessibilityLabel={`${es.finalizar.puesto(posicion)}: ${participante.nombre}, ${es.comun.puntos(total)}`}
       style={[styles.columna, esPrimero && styles.columnaPrimero]}
     >
-      {/* El confeti va al lado y no adentro: si no, se achicaria y desvaneceria con el rebote. */}
       <View style={styles.lugarDeLaPersona}>
-        {reflector !== undefined && <Reflector {...reflector} />}
         <Animated.View style={[styles.persona, aparicion]}>
           {esPrimero && <Corona />}
           <Avatar
@@ -386,7 +360,6 @@ function Escalon({ puesto, participante, escalon, persona, confeti, reflector }:
             {`${participante.nombre} · ${puntosCortos(total)}`}
           </Text>
         </Animated.View>
-        {esPrimero && <Confeti activo={confeti} />}
       </View>
       <View style={[styles.escalonRecorte, { height: alto }]}>
         <Animated.View
@@ -399,30 +372,6 @@ function Escalon({ puesto, participante, escalon, persona, confeti, reflector }:
           <Text style={[styles.numero, esPrimero && styles.numeroPrimero]}>{posicion}</Text>
         </Animated.View>
       </View>
-    </View>
-  );
-}
-
-/** El circulo del reflector a escala 1, y lo que queda al final: el lugar del ganador. */
-const LADO_LUZ = 100;
-
-/**
- * Un circulo centrado en el lugar del ganador (cambio 105, solo el circulo
- * desde el 106, oscuro desde el 107). Arranca tan grande que tapa toda la
- * pantalla, sin dejar ver lo de abajo, y se va cerrando hasta el primer puesto.
- * `luz` lo prende y lo apaga.
- */
-function Reflector({ luz, cierre }: { luz: Animated.Value; cierre: Animated.Value }) {
-  const styles = useEstilos();
-  const { width, height } = useWindowDimensions();
-  // Desde el ganador hasta la esquina mas lejana entra con la diagonal entera.
-  const enorme = (2 * Math.hypot(width, height)) / LADO_LUZ;
-  const escala = cierre.interpolate({ inputRange: [0, 1], outputRange: [enorme, 1] });
-  return (
-    <View pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" style={styles.reflector}>
-      <Animated.View
-        style={[styles.luz, { opacity: luz, transform: [{ scale: escala }] }]}
-      />
     </View>
   );
 }
@@ -489,22 +438,9 @@ const useEstilos = crearEstilos((colores) => ({
   titulo: { ...tipografia.titulo, fontSize: 38, lineHeight: 44, letterSpacing: -1, color: colores.tinta, textAlign: 'center' },
   podio: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'center', gap: espacios.xs },
   columna: { flex: 1, maxWidth: 120, alignItems: 'center' },
-  // El confeti sale del ganador y tiene que pasar por encima de las otras columnas.
+  // El ganador rebota y crece: que pase por encima de las otras columnas.
   columnaPrimero: { zIndex: 1 },
-  // Por encima del escalon de su columna: el circulo oscuro tiene que tapar tambien el «1» (cambio 108).
   lugarDeLaPersona: { alignSelf: 'stretch', zIndex: 2 },
-  // Un punto en el centro del lugar del ganador: el circulo de luz se centra ahi.
-  reflector: { position: 'absolute', top: '50%', left: '50%', width: 0, height: 0, overflow: 'visible' },
-  luz: {
-    position: 'absolute',
-    top: -LADO_LUZ / 2,
-    left: -LADO_LUZ / 2,
-    width: LADO_LUZ,
-    height: LADO_LUZ,
-    borderRadius: LADO_LUZ / 2,
-    // Tapa del todo lo de abajo hasta que se cierra (cambio 107).
-    backgroundColor: PODIO.reflector,
-  },
   persona: { alignItems: 'center', gap: espacios.xxs },
   // El escalon sube desde abajo de la base del podio, sin verse por debajo.
   escalonRecorte: { alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-end' },

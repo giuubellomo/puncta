@@ -47,6 +47,7 @@ export const es = {
     // Cambio 128: la tarjeta muestra como va
     vaGanando: (cuantos: number) => (cuantos === 1 ? 'Va ganando' : 'Van ganando'),
     masJugadores: (n: number) => `+${n}`,
+    recienEmpieza: 'Recién empieza',
     seguirJugando: 'Seguir jugando',
     /** «Ronda 4 de 7»; con rondas ilimitadas, «Ronda 4». */
     rondaDe: (ronda: number, total: number | null) => (total === null ? `Ronda ${ronda}` : `Ronda ${ronda} de ${total}`),

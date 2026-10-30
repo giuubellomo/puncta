@@ -15,8 +15,6 @@ export const PODIO = {
   tarjeta: '#FFFFFF',
   lineaTarjeta: '#DCC3F0',
   grisTarjeta: '#4F3F5E',
-  /** El circulo del reflector: mas oscuro que el fondo, para que se note que se cierra. */
-  reflector: '#0B0113',
 } as const;
 
 export const COLOR_ESCALON: Record<number, string> = { 1: PODIO.primero, 2: PODIO.segundo, 3: PODIO.tercero };

@@ -151,7 +151,8 @@ const MAXIMO_DETRAS = 3;
 /**
  * RF-102 (cambio 128): la partida abierta como una tarjeta clara que muestra
  * como va, y no como un boton. Arriba el nombre y la ronda; en el medio quien va
- * ganando, grande, y los demas chiquitos con sus puntos; abajo «Seguir jugando».
+ * ganando, grande, y los demas chiquitos con sus puntos (con todos en 0, «Recien
+ * empieza» y quienes juegan); abajo «Seguir jugando».
  * Toda la tarjeta abre la partida (7.1). Quien gana lo dice `rankear`, con el
  * criterio de la plantilla.
  */
@@ -168,11 +169,16 @@ function SeguirPartida({ partida }: { partida: Partida }) {
   const lider = quien(primeros[0]!);
   const nombresPrimeros = primeros.map((puesto) => quien(puesto).nombre);
   const puntosPrimeros = puntosCortos(primeros[0]!.total);
+  // Todos en 0: todavia no va ganando nadie.
+  const recienEmpieza = puestos.every((puesto) => puesto.total === 0);
+  const estado = recienEmpieza
+    ? es.home.recienEmpieza
+    : `${es.home.vaGanando(nombresPrimeros.length)} ${nombresPrimeros.join(' y ')}, ${puntosPrimeros}`;
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${es.home.seguir(partida.nombre)}. ${ronda}. ${es.home.vaGanando(nombresPrimeros.length)} ${nombresPrimeros.join(' y ')}, ${puntosPrimeros}`}
+      accessibilityLabel={`${es.home.seguir(partida.nombre)}. ${ronda}. ${estado}`}
       onPress={() => router.push({ pathname: '/partida/[id]', params: { id: partida.id } })}
       style={({ pressed }) => [styles.seguir, pressed && styles.presionado]}
     >
@@ -185,29 +191,43 @@ function SeguirPartida({ partida }: { partida: Partida }) {
         </Text>
       </View>
 
-      <View style={styles.seguirMedio}>
-        <Avatar tipo={lider.avatarTipo} valor={lider.avatarValor} nombre={lider.nombre} tamano={48} />
-        <View style={styles.seguirLider}>
-          <Text style={styles.seguirEtiqueta}>{es.home.vaGanando(nombresPrimeros.length)}</Text>
-          <Text style={[styles.seguirGanador, numerales]} numberOfLines={1}>
-            {`${nombresPrimeros.join(' y ')} · ${puntosPrimeros}`}
-          </Text>
+      {recienEmpieza ? (
+        <View style={styles.seguirMedio}>
+          <Text style={[styles.seguirGanador, styles.seguirLider]}>{es.home.recienEmpieza}</Text>
+          <View style={styles.detras}>
+            {partida.participantes.slice(0, MAXIMO_DETRAS + 1).map((p) => (
+              <Avatar key={p.id} tipo={p.avatarTipo} valor={p.avatarValor} nombre={p.nombre} tamano={32} />
+            ))}
+            {partida.participantes.length > MAXIMO_DETRAS + 1 && (
+              <Text style={styles.masJugadores}>{es.home.masJugadores(partida.participantes.length - MAXIMO_DETRAS - 1)}</Text>
+            )}
+          </View>
         </View>
-        <View style={styles.detras}>
-          {detras.slice(0, MAXIMO_DETRAS).map((puesto) => {
-            const p = quien(puesto);
-            return (
-              <View key={p.id} style={styles.otro}>
-                <Avatar tipo={p.avatarTipo} valor={p.avatarValor} nombre={p.nombre} tamano={32} />
-                <Text style={[styles.puntosOtro, numerales]}>{puntosCortos(puesto.total)}</Text>
-              </View>
-            );
-          })}
-          {detras.length > MAXIMO_DETRAS && (
-            <Text style={styles.masJugadores}>{es.home.masJugadores(detras.length - MAXIMO_DETRAS)}</Text>
-          )}
+      ) : (
+        <View style={styles.seguirMedio}>
+          <Avatar tipo={lider.avatarTipo} valor={lider.avatarValor} nombre={lider.nombre} tamano={48} />
+          <View style={styles.seguirLider}>
+            <Text style={styles.seguirEtiqueta}>{es.home.vaGanando(nombresPrimeros.length)}</Text>
+            <Text style={[styles.seguirGanador, numerales]} numberOfLines={1}>
+              {`${nombresPrimeros.join(' y ')} · ${puntosPrimeros}`}
+            </Text>
+          </View>
+          <View style={styles.detras}>
+            {detras.slice(0, MAXIMO_DETRAS).map((puesto) => {
+              const p = quien(puesto);
+              return (
+                <View key={p.id} style={styles.otro}>
+                  <Avatar tipo={p.avatarTipo} valor={p.avatarValor} nombre={p.nombre} tamano={32} />
+                  <Text style={[styles.puntosOtro, numerales]}>{puntosCortos(puesto.total)}</Text>
+                </View>
+              );
+            })}
+            {detras.length > MAXIMO_DETRAS && (
+              <Text style={styles.masJugadores}>{es.home.masJugadores(detras.length - MAXIMO_DETRAS)}</Text>
+            )}
+          </View>
         </View>
-      </View>
+      )}
 
       <Text style={styles.seguirJugando}>{`${es.home.seguirJugando} ${iconos.adelante}`}</Text>
     </Pressable>
