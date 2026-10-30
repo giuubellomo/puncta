@@ -1,4 +1,4 @@
-import { llegaronAlObjetivo, llegoHastaRonda, nuevosEnLaRonda } from '../objetivo';
+import { faltaParaElObjetivo, llegaronAlObjetivo, llegoHastaRonda, nuevosEnLaRonda } from '../objetivo';
 import type { ModoPuntos, Partida } from '../types';
 
 /** Dos rondas en Simple: la 1 cerrada con `primera`, la 2 en curso vacia. */
@@ -69,6 +69,23 @@ describe('llegoHastaRonda', () => {
 
   it('sin objetivo nunca llega', () => {
     expect(llegoHastaRonda(partida({ a: 900, b: 10 }), 'a', 1)).toBe(false);
+  });
+});
+
+describe('faltaParaElObjetivo', () => {
+  it('lo que falta con el acumulado hasta la ronda', () => {
+    const p = conSegunda(partida({ a: 25, b: 10 }, 30), { a: 3, b: 0 });
+    expect(faltaParaElObjetivo(p, 'a', 1)).toBe(5);
+    expect(faltaParaElObjetivo(p, 'a', 2)).toBe(2);
+  });
+
+  it('restando, cuenta sin el signo', () => {
+    expect(faltaParaElObjetivo(partida({ a: 70, b: 10 }, 100, 'resta'), 'a', 1)).toBe(30);
+  });
+
+  it('si ya llego, 0; sin objetivo, null', () => {
+    expect(faltaParaElObjetivo(partida({ a: 45, b: 10 }, 30), 'a', 1)).toBe(0);
+    expect(faltaParaElObjetivo(partida({ a: 45, b: 10 }), 'a', 1)).toBeNull();
   });
 });
 

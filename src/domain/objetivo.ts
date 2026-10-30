@@ -35,6 +35,17 @@ export function llegoHastaRonda(partida: Partida, participanteId: string, numero
 }
 
 /**
+ * Cuanto le falta para el objetivo con el acumulado hasta esa ronda, sin signo:
+ * 0 si ya llego. null si la partida no tiene objetivo. Va debajo del total en
+ * la ronda en juego y en la planilla (cambios 122 y 123).
+ */
+export function faltaParaElObjetivo(partida: Partida, participanteId: string, numeroRonda: number): number | null {
+  const objetivo = partida.plantilla.puntajeObjetivo;
+  if (objetivo === undefined) return null;
+  return Math.max(0, objetivo - Math.abs(totalHastaRonda(partida, participanteId, numeroRonda)));
+}
+
+/**
  * Quienes llegaron recien en esa ronda: con ella si, sin ella no. Es lo que
  * dispara el aviso al tocar SIGUIENTE (cambio 120). Si ya habia llegado y se
  * siguio jugando, no se vuelve a avisar por el mismo.

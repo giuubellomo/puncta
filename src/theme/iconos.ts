@@ -29,6 +29,8 @@ export const iconos = {
   ayuda: '?',
   /** Escribir el objetivo de una ronda (cambio 119). */
   lapiz: `✎${TEXTO}`,
+  /** Ver la planilla de toda la partida (cambio 123). */
+  planilla: '▦',
   /** En la casilla de quien llego al objetivo (cambio 120). */
   estrella: '★',
 } as const;

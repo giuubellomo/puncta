@@ -9,7 +9,7 @@ import {
   reglasSinAsignar,
 } from '@/domain/rondas';
 import { esCanasta, minimoParaBajar } from '@/domain/canasta';
-import { llegoHastaRonda } from '@/domain/objetivo';
+import { faltaParaElObjetivo, llegoHastaRonda } from '@/domain/objetivo';
 import { ordenarPorTotalHastaRonda } from '@/domain/ranking';
 import { mejoresDeRonda, puntajeCargado, totalHastaRonda } from '@/domain/scoring';
 import type { Participante, Partida, Plantilla, RondaJugada } from '@/domain/types';
@@ -209,6 +209,7 @@ function Filas({ ronda, partida, onTocarParticipante, ordenadas = false }: Props
         total={totalHastaRonda(partida, participante.id, ronda.numero)}
         reglas={detalleDeFila(ronda, partida, participante.id)}
         llego={llegoHastaRonda(partida, participante.id, ronda.numero)}
+        falta={ordenadas ? faltaTexto(partida, participante.id, ronda.numero) : null}
         onPress={onTocarParticipante && (() => onTocarParticipante(participante.id))}
       />
     );
@@ -299,6 +300,8 @@ interface PropsFila {
   reglas: string[];
   /** Con el acumulado hasta esta ronda llego al objetivo: la casilla lleva una estrella (cambio 120). */
   llego: boolean;
+  /** Cambio 122: debajo del total, en la ronda en juego con objetivo. */
+  falta: string | null;
   onPress?: () => void;
 }
 
@@ -309,7 +312,7 @@ interface PropsFila {
  * Debajo del nombre, las reglas que se llevo en la ronda (cambio 77). Si llego
  * al objetivo, la casilla se pinta y lleva una estrella (cambio 120).
  */
-function FilaDeParticipante({ participante, puntaje, total, reglas, llego, onPress }: PropsFila) {
+function FilaDeParticipante({ participante, puntaje, total, reglas, llego, falta, onPress }: PropsFila) {
   const styles = useEstilos();
   const vacia = puntaje === null;
   const valor = vacia ? es.partida.sinCargar : conSigno(puntaje);
@@ -330,12 +333,15 @@ function FilaDeParticipante({ participante, puntaje, total, reglas, llego, onPre
           {vacia ? iconos.raya : valor}
         </Text>
       </View>
-      <Text style={[styles.total, numerales]}>{conSigno(total)}</Text>
+      <View style={styles.columnaTotal}>
+        <Text style={[styles.total, numerales]}>{conSigno(total)}</Text>
+        {falta !== null && <Text style={[styles.falta, llego && styles.faltaLlego, numerales]}>{falta}</Text>}
+      </View>
     </>
   );
   const etiqueta = [
     es.partida.puntajeDe(participante.nombre, valor, conSigno(total)),
-    ...(llego ? [es.partida.llegoAlObjetivo] : []),
+    ...(llego ? [es.partida.llegoAlObjetivo] : falta !== null ? [falta] : []),
     ...reglas,
   ].join(', ');
 
@@ -357,6 +363,13 @@ function FilaDeParticipante({ participante, puntaje, total, reglas, llego, onPre
       {contenido}
     </Pressable>
   );
+}
+
+/** «faltan 70», «faltan −70» o «★ llegó»; null sin objetivo (cambio 122). */
+export function faltaTexto(partida: Partida, participanteId: string, numeroRonda: number): string | null {
+  const falta = faltaParaElObjetivo(partida, participanteId, numeroRonda);
+  if (falta === null) return null;
+  return falta === 0 ? `${iconos.estrella} ${es.partida.llego}` : es.partida.faltan(falta, partida.plantilla.modoPuntos);
 }
 
 /**
@@ -458,6 +471,9 @@ const useEstilos = crearEstilos((colores) => ({
   casillaLlego: { backgroundColor: colores.destacado, borderStyle: 'solid', borderColor: colores.borde },
   estrella: { color: colores.sobreDestacado, fontSize: 14 },
   puntajeLlego: { color: colores.sobreDestacado },
-  // Ancho fijo: los totales quedan en columna aunque cambie la cantidad de digitos.
-  total: { ...tipografia.secundario, color: colores.grisOscuro, minWidth: 44, textAlign: 'right' },
+  total: { ...tipografia.secundario, color: colores.grisOscuro, textAlign: 'right' },
+  // Ancho minimo: los totales quedan en columna aunque cambie la cantidad de digitos.
+  columnaTotal: { minWidth: 44, alignItems: 'flex-end' },
+  falta: { ...tipografia.chico, fontSize: 11, lineHeight: 14, color: colores.grisMedio },
+  faltaLlego: { color: colores.tinta, fontFamily: fuentes.cuerpoBold },
 }));

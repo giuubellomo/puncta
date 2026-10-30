@@ -1,29 +1,37 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Animated,
   Easing,
+  PixelRatio,
   Platform,
   Pressable,
   ScrollView,
+  Share,
   Text,
   View,
   useWindowDimensions,
+  type HostInstance,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Path } from 'react-native-svg';
+import { captureRef } from 'react-native-view-shot';
 
 import { Avatar, type TamanoAvatar } from '@/components/Avatar';
 import { Boton } from '@/components/Boton';
 import { Confeti } from '@/components/Confeti';
+import { Corona } from '@/components/Corona';
+import { ALTO_IMAGEN, ANCHO_IMAGEN, ImagenDelPodio } from '@/components/ImagenDelPodio';
 import { rankear, type Puesto } from '@/domain/ranking';
 import type { Participante } from '@/domain/types';
 import { es } from '@/i18n/es';
 import * as partidas from '@/repositories/partidas';
+import { COLOR_ESCALON, PODIO } from '@/theme/podio';
 import { crearEstilos, ProveedorDeTema } from '@/theme/tema';
-import { BORDE, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
 import { usePartida } from '@/hooks/usePartida';
 
 /** Alto del escalon segun la posicion: con empate, los que comparten puesto quedan a la misma altura. */
@@ -32,28 +40,6 @@ const ALTO_ESCALON: Record<number, number> = { 1: 160, 2: 112, 3: 84 };
 /** El tamaño de quien esta arriba de cada escalon, como en la lamina. */
 const TAMANO_PERSONA: Record<number, TamanoAvatar> = { 1: 88, 2: 56, 3: 48 };
 
-/**
- * Los colores de la lamina «Podio» (cambio 117), fijos en cualquier tema: el
- * violeta de fondo, los escalones en sol, chicle y celeste, y la tarjeta blanca
- * del resto. Lo demas (textos claros, botones, confeti) sale del tema Noche,
- * que envuelve la pantalla.
- */
-const PODIO = {
-  /** El violeta electrico y no la noche de la lamina: ahi los personajes, con su borde negro, se perdian. */
-  fondo: '#A52AE6',
-  tinta: '#141118',
-  primero: '#FFD23F',
-  segundo: '#FF4FD8',
-  tercero: '#00C2FF',
-  corona: '#FFD23F',
-  tarjeta: '#FFFFFF',
-  lineaTarjeta: '#DCC3F0',
-  grisTarjeta: '#4F3F5E',
-  /** El circulo del reflector: mas oscuro que el fondo, para que se note que se cierra. */
-  reflector: '#0B0113',
-} as const;
-
-const COLOR_ESCALON: Record<number, string> = { 1: PODIO.primero, 2: PODIO.segundo, 3: PODIO.tercero };
 
 /**
  * La entrada del podio (cambio 105): la pantalla arranca tapada por un circulo
@@ -100,6 +86,9 @@ function Podio() {
   const { partida } = usePartida(id);
   const [armandoRevancha, setArmandoRevancha] = useState(false);
   const [errorRevancha, setErrorRevancha] = useState(false);
+  const [compartiendo, setCompartiendo] = useState(false);
+  const [errorAlCompartir, setErrorAlCompartir] = useState(false);
+  const imagen = useRef<HostInstance>(null);
   const puestos = partida === null ? [] : rankear(partida);
   // Los que aparecen despues del ganador, de a uno y en orden de puesto.
   const siguientes = puestos.filter((puesto) => puesto.posicion !== 1).map((puesto) => puesto.participanteId);
@@ -126,6 +115,8 @@ function Podio() {
         plantillaId: partida.plantilla.id,
         participantes: partida.participantes,
         puntajeObjetivo: partida.plantilla.puntajeObjetivo,
+        // En la Simple, suma o resta (cambio 121); en las demas se ignora.
+        modoPuntos: partida.plantilla.modoPuntos,
       });
       router.replace({ pathname: '/partida/[id]', params: { id: nueva.id } });
     } catch {
@@ -134,8 +125,61 @@ function Podio() {
     }
   };
 
+  // Cambio 124: la imagen del resultado, a 1080 × 1920, al menu de compartir del telefono.
+  const compartir = async () => {
+    setCompartiendo(true);
+    setErrorAlCompartir(false);
+    try {
+      const archivo = await captureRef(imagen, {
+        format: 'png',
+        result: 'tmpfile',
+        width: 1080 / PixelRatio.get(),
+        height: 1920 / PixelRatio.get(),
+      });
+      if (Platform.OS === 'ios') {
+        // El Share de React Native manda la imagen y el texto con el link juntos.
+        const url = archivo.startsWith('file://') ? archivo : `file://${archivo}`;
+        await Share.share({ url, message: es.compartir.mensaje(URL_DE_LA_WEB) });
+      } else {
+        // En Android, Share solo manda texto: va la imagen sola.
+        await Sharing.shareAsync(archivo, { mimeType: 'image/png', dialogTitle: es.compartir.boton });
+      }
+    } catch {
+      setErrorAlCompartir(true);
+    } finally {
+      setCompartiendo(false);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.pantalla}>
+      {/* Fuera de la pantalla: solo esta para capturarla al compartir. */}
+      {COMPARTIR_DISPONIBLE && (
+        <View
+          pointerEvents="none"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.fueraDePantalla}
+        >
+          <ImagenDelPodio ref={imagen} partida={partida} puestos={puestos} />
+        </View>
+      )}
+
+      {COMPARTIR_DISPONIBLE && (
+        <Animated.View style={[styles.barraSuperior, { opacity: animacion.pie }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={es.compartir.boton}
+            accessibilityState={{ disabled: compartiendo }}
+            disabled={compartiendo}
+            onPress={() => void compartir()}
+            style={({ pressed }) => [styles.botonCompartir, (pressed || compartiendo) && styles.presionado]}
+          >
+            <IconoCompartir />
+          </Pressable>
+        </Animated.View>
+      )}
+
       <ScrollView contentContainerStyle={styles.contenido}>
         <View style={styles.encabezado}>
           <Text style={styles.etiqueta}>{partida.nombre}</Text>
@@ -175,6 +219,7 @@ function Podio() {
 
       <Animated.View style={[styles.pie, { opacity: animacion.pie }]}>
         {errorRevancha && <Text style={styles.error}>{es.finalizar.errorRevancha}</Text>}
+        {errorAlCompartir && <Text style={styles.error}>{es.compartir.error}</Text>}
         <Boton
           titulo={es.finalizar.revancha}
           variante="destacado"
@@ -187,6 +232,36 @@ function Podio() {
         </Pressable>
       </Animated.View>
     </SafeAreaView>
+  );
+}
+
+/**
+ * En la web no se puede compartir un archivo local (expo-sharing usa la Web
+ * Share API, que no lo acepta): ahi el boton no aparece.
+ */
+const COMPARTIR_DISPONIBLE = Platform.OS !== 'web';
+
+const LADO_BOTON_COMPARTIR = 40;
+
+/**
+ * El link que acompaña a la imagen. Si la web se muda (otro nombre de repo),
+ * cambia aca junto con `experiments.baseUrl` y `public/manifest.json`.
+ */
+const URL_DE_LA_WEB = 'https://giuubellomo.github.io/puncta/';
+
+/** El de compartir de iOS: una caja abierta arriba con una flecha que sale. */
+function IconoCompartir() {
+  return (
+    <Svg width={20} height={22} viewBox="0 0 20 22" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Path
+        d="M10 14 V2 M5.5 6.5 L10 2 L14.5 6.5 M6.5 9.5 H4 A1.5 1.5 0 0 0 2.5 11 V18.5 A1.5 1.5 0 0 0 4 20 H16 A1.5 1.5 0 0 0 17.5 18.5 V11 A1.5 1.5 0 0 0 16 9.5 H13.5"
+        fill="none"
+        stroke={PODIO.tinta}
+        strokeWidth={2.2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </Svg>
   );
 }
 
@@ -328,21 +403,6 @@ function Escalon({ puesto, participante, escalon, persona, confeti, reflector }:
   );
 }
 
-/** La corona del ganador, en sol. */
-function Corona() {
-  return (
-    <Svg width={46} height={32} viewBox="0 0 46 32" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Path
-        d="M4 10 L13 18 L23 4 L33 18 L42 10 L39 29 L7 29 Z"
-        fill={PODIO.corona}
-        stroke={PODIO.tinta}
-        strokeWidth={2.5}
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
-
 /** El circulo del reflector a escala 1, y lo que queda al final: el lugar del ganador. */
 const LADO_LUZ = 100;
 
@@ -408,6 +468,21 @@ function FilaDelResto({ puesto, participante, aparicion, primera }: PropsFila) {
 
 const useEstilos = crearEstilos((colores) => ({
   pantalla: { flex: 1, backgroundColor: PODIO.fondo },
+  fueraDePantalla: { position: 'absolute', top: 0, left: -2 * ANCHO_IMAGEN, width: ANCHO_IMAGEN, height: ALTO_IMAGEN },
+  barraSuperior: { flexDirection: 'row', justifyContent: 'flex-end', paddingHorizontal: espacios.md, zIndex: 4 },
+  // Area tocable de 44 con el hitSlop del margen (RNF-3).
+  botonCompartir: {
+    width: LADO_BOTON_COMPARTIR,
+    height: LADO_BOTON_COMPARTIR,
+    margin: (AREA_TOCABLE_MINIMA - LADO_BOTON_COMPARTIR) / 2,
+    borderRadius: LADO_BOTON_COMPARTIR / 2,
+    borderWidth: BORDE,
+    borderColor: PODIO.tinta,
+    backgroundColor: PODIO.tarjeta,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  presionado: { opacity: 0.6 },
   contenido: { paddingHorizontal: espacios.xl, paddingTop: espacios.lg, paddingBottom: espacios.xl },
   encabezado: { alignItems: 'center', gap: espacios.xs, marginBottom: espacios.xl },
   etiqueta: { ...tipografia.etiqueta, color: colores.tinta, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 2, textAlign: 'center' },

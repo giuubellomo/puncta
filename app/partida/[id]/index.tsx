@@ -12,6 +12,7 @@ import { PaginasDeRondas } from '@/components/PaginasDeRondas';
 import { Popup } from '@/components/Popup';
 import { PopupDeCanasta } from '@/components/PopupDeCanasta';
 import { PopupDeCarga } from '@/components/PopupDeCarga';
+import { SheetDePlanilla } from '@/components/SheetDePlanilla';
 import { TableroDeTruco } from '@/components/TableroDeTruco';
 import { esCanasta } from '@/domain/canasta';
 import { nuevosEnLaRonda } from '@/domain/objetivo';
@@ -47,6 +48,7 @@ export default function PantallaDePartida() {
   const [confirmando, setConfirmando] = useState(false);
   const [errorAlTerminar, setErrorAlTerminar] = useState(false);
   const [viendoAyuda, setViendoAyuda] = useState(false);
+  const [viendoPlanilla, setViendoPlanilla] = useState(false);
   // Cambio 119: la ronda cuyo objetivo se esta escribiendo, y lo escrito.
   const [objetivoEnEdicion, setObjetivoEnEdicion] = useState<number | null>(null);
   const [textoObjetivo, setTextoObjetivo] = useState('');
@@ -139,6 +141,15 @@ export default function PantallaDePartida() {
           </Text>
           {objetivo !== undefined && <Text style={styles.hasta}>{es.partida.hasta(objetivo)}</Text>}
         </View>
+        {/* Cambio 123: toda la partida en una tabla. El Truco no tiene rondas. */}
+        {!esTruco(partida.plantilla) && (
+          <BotonIcono
+            icono={iconos.planilla}
+            etiqueta={es.partida.verPlanilla}
+            tamano={36}
+            onPress={() => setViendoPlanilla(true)}
+          />
+        )}
         {/* Cambio 119: como se cuenta, a mano en la mesa. */}
         {ayuda !== undefined && (
           <BotonIcono icono={iconos.ayuda} etiqueta={es.partida.verAyuda} tamano={36} onPress={() => setViendoAyuda(true)} />
@@ -211,6 +222,10 @@ export default function PantallaDePartida() {
             onTerminar={terminarDesdeElAviso}
           />
         </Popup>
+      )}
+
+      {!esTruco(partida.plantilla) && (
+        <SheetDePlanilla visible={viendoPlanilla} partida={partida} onCerrar={() => setViendoPlanilla(false)} />
       )}
 
       {ayuda !== undefined && (

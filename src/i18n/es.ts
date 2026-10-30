@@ -237,6 +237,10 @@ export const es = {
     objetivo: (texto: string) => `Objetivo: ${texto}`,
     /** Cambio 120: la estrella de la casilla, para el lector de pantalla. */
     llegoAlObjetivo: 'llegó al objetivo',
+    /** Cambio 122: debajo del total. Restando, con el signo: «faltan −70». */
+    faltan: (puntos: number, modo: 'suma' | 'resta') => `faltan ${modo === 'resta' ? conSigno(-puntos) : puntos}`,
+    llego: 'llegó',
+    verPlanilla: 'Ver la planilla',
     // Cambio 119: el objetivo que se escribe al jugar y la ayuda de la plantilla
     escribirObjetivo: 'Escribir el objetivo',
     cambiarObjetivo: (texto: string) => `Objetivo: ${texto}. Tocá para cambiarlo`,
@@ -284,6 +288,21 @@ export const es = {
     /** Cambio 120: al tocar SIGUIENTE, con la ronda ya cargada. */
     terminarOSeguirJugando: '¿Terminás la partida o siguen jugando?',
     seguir: 'Seguir',
+  },
+
+  /** La planilla de toda la partida (cambio 123) */
+  planilla: {
+    titulo: 'Planilla',
+    /** «4 rondas · hasta 500 pts · gana el que más tiene» */
+    subtitulo: (rondas: number, objetivo: number | undefined, criterio: 'menor' | 'mayor') =>
+      [
+        rondas === 1 ? '1 ronda' : `${rondas} rondas`,
+        ...(objetivo === undefined ? [] : [`hasta ${objetivo} pts`]),
+        `gana el que ${criterio === 'menor' ? 'menos' : 'más'} tiene`,
+      ].join(' · '),
+    ronda: (numero: number) => `R${numero}`,
+    total: 'Total',
+    mejorDeLaRonda: 'el mejor de la ronda',
   },
 
   /** La calculadora de la Canasta (cambio 101) */
@@ -394,5 +413,19 @@ export const es = {
     // Solo para el lector de pantalla: «Puesto 1: Caro, −55 pts»
     puesto: (n: number) => `Puesto ${n}`,
     volverAlInicio: 'Volver al inicio',
+  },
+
+  /** La imagen del resultado, desde el podio (cambio 124) */
+  compartir: {
+    boton: 'Compartir el resultado',
+    error: 'No se pudo armar la imagen. Probá de nuevo.',
+    /** «30 oct 2026» */
+    fecha: (fecha: Date) =>
+      `${fecha.getDate()} ${['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'][fecha.getMonth()]} ${fecha.getFullYear()}`,
+    rondas: (n: number) => (n === 1 ? '1 ronda' : `${n} rondas`),
+    yMas: (n: number) => `y ${n} más`,
+    firma: 'Anotado con Puncta',
+    /** El texto que acompaña a la imagen, con el link de la app. */
+    mensaje: (url: string) => `Anotado con Puncta: ${url}`,
   },
 } as const;
