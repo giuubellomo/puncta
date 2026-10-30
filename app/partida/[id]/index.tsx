@@ -1,17 +1,20 @@
 import { useKeepAwake } from 'expo-keep-awake';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Keyboard, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { AvisoDeObjetivo } from '@/components/AvisoDeObjetivo';
 import { Boton } from '@/components/Boton';
 import { BotonIcono } from '@/components/BotonIcono';
+import { CampoTexto } from '@/components/CampoTexto';
 import { PaginasDeRondas } from '@/components/PaginasDeRondas';
 import { Popup } from '@/components/Popup';
 import { PopupDeCanasta } from '@/components/PopupDeCanasta';
 import { PopupDeCarga } from '@/components/PopupDeCarga';
 import { TableroDeTruco } from '@/components/TableroDeTruco';
 import { esCanasta } from '@/domain/canasta';
+import { nuevosEnLaRonda } from '@/domain/objetivo';
 import { rondaEnCursoIncompleta } from '@/domain/rondas';
 import { esTruco } from '@/domain/truco';
 import type { Partida, RondaJugada } from '@/domain/types';
@@ -27,7 +30,8 @@ import { espacios, tipografia } from '@/theme/tokens';
  * que se elige al armarla y aca no se edita (registro, cambio 71), las rondas y
  * TERMINAR PARTIDA fijo abajo. Todo sale de la base via `usePartida`: salir y
  * volver deja todo igual. Tocar a un participante abre el popup de carga (7.4)
- * y SIGUIENTE cierra la ronda en juego (7.5). Las rondas van una por pantalla
+ * y SIGUIENTE cierra la ronda en juego (7.5), o antes avisa si alguien llego al
+ * objetivo (cambio 120). Las rondas van una por pantalla
  * (cambio 100): una cerrada se corrige con el mismo popup (7.6). TERMINAR pide
  * confirmacion y finaliza la partida (8.1).
  */
@@ -42,6 +46,18 @@ export default function PantallaDePartida() {
   const [cargaAbierta, setCargaAbierta] = useState(false);
   const [confirmando, setConfirmando] = useState(false);
   const [errorAlTerminar, setErrorAlTerminar] = useState(false);
+  const [viendoAyuda, setViendoAyuda] = useState(false);
+  // Cambio 119: la ronda cuyo objetivo se esta escribiendo, y lo escrito.
+  const [objetivoEnEdicion, setObjetivoEnEdicion] = useState<number | null>(null);
+  const [textoObjetivo, setTextoObjetivo] = useState('');
+  const [errorObjetivo, setErrorObjetivo] = useState(false);
+  // Cambio 120: el aviso de SIGUIENTE cuando alguien llego al objetivo. `responder`
+  // le contesta a la tarjeta si la ronda se cerro (true) o no (false).
+  const [avisoDeObjetivo, setAvisoDeObjetivo] = useState<{
+    numeroRonda: number;
+    nombres: string[];
+    responder: (avanzo: Promise<boolean>) => void;
+  } | null>(null);
 
   // RF-713: en la mesa nadie toca el telefono por un rato y la pantalla no se apaga.
   useKeepAwake();
@@ -63,14 +79,55 @@ export default function PantallaDePartida() {
     irAlPodio();
   };
 
-  // El aviso de objetivo (cambio 92), sin la confirmacion de TERMINAR: ya es una.
+  const cerrarRonda = async (numeroRonda: number) => {
+    await mutar(() => partidas.cerrarRonda(partida.id, numeroRonda));
+    return true;
+  };
+
+  // Cambio 120: llegar al objetivo no corta la carga. Al tocar SIGUIENTE, si
+  // alguien llego en esta ronda, se pregunta antes de cerrarla.
+  const siguiente = (numeroRonda: number): Promise<boolean> => {
+    const nuevos = nuevosEnLaRonda(partida, numeroRonda);
+    if (nuevos.length === 0) return cerrarRonda(numeroRonda);
+    return new Promise((resolve) =>
+      setAvisoDeObjetivo({
+        numeroRonda,
+        nombres: nuevos.map((id) => partida.participantes.find((p) => p.id === id)?.nombre ?? ''),
+        responder: (avanzo) => {
+          setAvisoDeObjetivo(null);
+          resolve(avanzo);
+        },
+      }),
+    );
+  };
+
+  // Desde el aviso, sin la confirmacion de TERMINAR: ya es una.
   const terminarDesdeElAviso = async () => {
     await mutar(() => partidas.finalizar(partida.id));
-    setCargaAbierta(false);
+    avisoDeObjetivo?.responder(Promise.resolve(false));
     irAlPodio();
   };
 
   const objetivo = partida.plantilla.puntajeObjetivo;
+  const { ayuda } = partida.plantilla;
+
+  const abrirObjetivo = (numeroRonda: number) => {
+    setTextoObjetivo(partida.rondas.find((ronda) => ronda.numero === numeroRonda)?.objetivo ?? '');
+    setErrorObjetivo(false);
+    setObjetivoEnEdicion(numeroRonda);
+  };
+
+  const guardarObjetivo = async () => {
+    if (objetivoEnEdicion === null) return;
+    Keyboard.dismiss();
+    try {
+      await mutar(() => partidas.escribirObjetivo(partida.id, objetivoEnEdicion, textoObjetivo));
+    } catch {
+      setErrorObjetivo(true);
+      return;
+    }
+    setObjetivoEnEdicion(null);
+  };
 
   return (
     <SafeAreaView style={styles.pantalla}>
@@ -82,6 +139,10 @@ export default function PantallaDePartida() {
           </Text>
           {objetivo !== undefined && <Text style={styles.hasta}>{es.partida.hasta(objetivo)}</Text>}
         </View>
+        {/* Cambio 119: como se cuenta, a mano en la mesa. */}
+        {ayuda !== undefined && (
+          <BotonIcono icono={iconos.ayuda} etiqueta={es.partida.verAyuda} tamano={36} onPress={() => setViendoAyuda(true)} />
+        )}
       </View>
 
       {/* Cambio 93: el Truco se anota de a palitos, sin rondas. */}
@@ -101,7 +162,8 @@ export default function PantallaDePartida() {
             setCarga({ numeroRonda, participanteId });
             setCargaAbierta(true);
           }}
-          onSiguiente={(numeroRonda) => mutar(() => partidas.cerrarRonda(partida.id, numeroRonda))}
+          onSiguiente={siguiente}
+          onTocarObjetivo={partida.plantilla.objetivoEditable ? abrirObjetivo : undefined}
         />
       )}
 
@@ -135,6 +197,56 @@ export default function PantallaDePartida() {
         </View>
       </Popup>
 
+      {objetivo !== undefined && (
+        <Popup
+          visible={avisoDeObjetivo !== null}
+          onCerrar={() => avisoDeObjetivo?.responder(Promise.resolve(false))}
+          etiquetaCerrar={es.comun.cerrar}
+          titulo={es.carga.llegoAlObjetivo(avisoDeObjetivo?.nombres ?? [], objetivo)}
+        >
+          <AvisoDeObjetivo
+            texto={es.carga.terminarOSeguirJugando}
+            // Seguir cierra la ronda; si falla, lo dice la tarjeta debajo del SIGUIENTE.
+            onSeguir={() => avisoDeObjetivo?.responder(cerrarRonda(avisoDeObjetivo.numeroRonda))}
+            onTerminar={terminarDesdeElAviso}
+          />
+        </Popup>
+      )}
+
+      {ayuda !== undefined && (
+        <Popup
+          visible={viendoAyuda}
+          onCerrar={() => setViendoAyuda(false)}
+          etiquetaCerrar={es.comun.cerrar}
+          titulo={es.partida.verAyuda}
+        >
+          <Text style={styles.textoPopup}>{ayuda}</Text>
+        </Popup>
+      )}
+
+      <Popup
+        visible={objetivoEnEdicion !== null}
+        onCerrar={() => {
+          Keyboard.dismiss();
+          setObjetivoEnEdicion(null);
+        }}
+        etiquetaCerrar={es.comun.cerrar}
+        titulo={es.partida.objetivoDeLaRonda(objetivoEnEdicion ?? 0)}
+      >
+        <CampoTexto
+          valor={textoObjetivo}
+          onCambiar={setTextoObjetivo}
+          placeholder={es.partida.ejemploObjetivo}
+          accessibilityLabel={es.partida.objetivoDeLaRonda(objetivoEnEdicion ?? 0)}
+          maxLength={LARGO_MAXIMO_OBJETIVO}
+          autoFocus
+          returnKeyType="done"
+          onSubmitEditing={() => void guardarObjetivo()}
+        />
+        {errorObjetivo && <Text style={styles.textoPopup}>{es.comun.errorGuardar}</Text>}
+        <Boton titulo={es.comun.guardar} onPress={() => void guardarObjetivo()} />
+      </Popup>
+
       {/* Cambio 101: la Canasta carga cada mano con su calculadora. */}
       {esCanasta(partida.plantilla) ? (
         <PopupDeCanasta
@@ -146,7 +258,6 @@ export default function PantallaDePartida() {
           onGuardar={(mano) =>
             mutar(() => partidas.guardarManoDeCanasta(partida.id, carga!.numeroRonda, carga!.participanteId, mano))
           }
-          onTerminar={terminarDesdeElAviso}
         />
       ) : (
         <PopupDeCarga
@@ -158,12 +269,14 @@ export default function PantallaDePartida() {
           onGuardar={(puntos, reglas) =>
             mutar(() => partidas.guardarCarga(partida.id, carga!.numeroRonda, carga!.participanteId, puntos, reglas))
           }
-          onTerminar={terminarDesdeElAviso}
         />
       )}
     </SafeAreaView>
   );
 }
+
+/** Una consigna corta: una letra, «Animales», «Solo copas». */
+const LARGO_MAXIMO_OBJETIVO = 40;
 
 /**
  * Las rondas de la base, y con rondas ilimitadas una mas bloqueada al final, como

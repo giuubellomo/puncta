@@ -67,7 +67,7 @@ export const es = {
     // El nombre se escribe al armar y es obligatorio (registro, cambio 71)
     nombre: 'Nombre de la partida',
     nombreEjemplo: 'Ej: Viernes de juegos',
-    // Solo si la plantilla tiene objetivo: viene de ahi y se puede cambiar (cambio 92)
+    // Si la plantilla tiene objetivo, viene de ahi y se puede cambiar (cambio 92); en la Simple, tambien ponerlo (121)
     objetivo: 'Objetivo',
     ayudaObjetivo: 'La partida termina cuando alguien llega a este puntaje.',
     // Cambio 94: los participantes del Truco son los dos equipos
@@ -144,6 +144,14 @@ export const es = {
     objetivo: 'Objetivo',
     sinObjetivo: 'Sin objetivo',
     conObjetivo: 'Hasta un puntaje',
+    // Cambio 119: de donde sale el objetivo de cada ronda, y el texto de ayuda
+    objetivoDeRonda: 'Objetivo de cada ronda',
+    objetivoDeLaPlantilla: 'De las rondas',
+    objetivoAlJugar: 'Se escribe al jugar',
+    ayudaObjetivoAlJugar: 'Al jugar cada ronda se escribe su objetivo, como la letra del Tutti Frutti.',
+    textoDeAyuda: 'Ayuda',
+    ejemploAyuda: 'Ej: Comodines: 50 · Reversa: 20',
+    ayudaDeAyuda: 'Un texto corto para tener a mano en la mesa. Se abre con el «?» de la partida.',
     ayudaObjetivo: (criterio: 'menor' | 'mayor') =>
       `La partida termina cuando alguien llega a este puntaje, y gana quien tenga ${criterio === 'menor' ? 'menos' : 'más'}. ` +
       'Se puede cambiar al armar la partida.',
@@ -227,6 +235,14 @@ export const es = {
     completada: 'Completada',
     enJuego: 'en juego',
     objetivo: (texto: string) => `Objetivo: ${texto}`,
+    /** Cambio 120: la estrella de la casilla, para el lector de pantalla. */
+    llegoAlObjetivo: 'llegó al objetivo',
+    // Cambio 119: el objetivo que se escribe al jugar y la ayuda de la plantilla
+    escribirObjetivo: 'Escribir el objetivo',
+    cambiarObjetivo: (texto: string) => `Objetivo: ${texto}. Tocá para cambiarlo`,
+    objetivoDeLaRonda: (ronda: number) => `Objetivo de la ronda ${ronda}`,
+    ejemploObjetivo: 'Ej: la letra M',
+    verAyuda: 'Cómo se cuenta',
     bloqueada: (anterior: number) => `Se habilita al terminar la Ronda ${anterior}`,
     siguiente: 'Siguiente',
     terminarPartida: 'Terminar partida',
@@ -265,6 +281,8 @@ export const es = {
     llegoAlObjetivo: (nombres: string[], puntos: number) =>
       `${nombres.join(' y ')} ${nombres.length > 1 ? 'llegaron' : 'llegó'} a ${puntos} pts`,
     terminarOSeguir: '¿Terminás la partida? Si fue un error de carga, seguí y corregilo.',
+    /** Cambio 120: al tocar SIGUIENTE, con la ronda ya cargada. */
+    terminarOSeguirJugando: '¿Terminás la partida o siguen jugando?',
     seguir: 'Seguir',
   },
 

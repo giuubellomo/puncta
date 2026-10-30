@@ -27,6 +27,7 @@ import {
 } from '@/domain/canasta';
 import { REGLA_CORTO } from '@/domain/rondas';
 import { PLANTILLA_TRUCO } from '@/domain/truco';
+import { PLANTILLA_SIMPLE } from '@/domain/simple';
 import type { Plantilla } from '@/domain/types';
 import { asegurarPredefinidas } from '@/repositories/plantillas';
 
@@ -66,8 +67,9 @@ export const CARIOCA: Plantilla = {
   }),
 };
 
+/** Cambio 121: suma o resta y el objetivo se eligen al armar la partida. */
 export const SIMPLE: Plantilla = {
-  id: '0391b4e3-e991-431c-ac4f-df61b13d62ee',
+  id: PLANTILLA_SIMPLE,
   nombre: 'Simple',
   icono: 'numeral',
   modoPuntos: 'suma',

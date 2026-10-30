@@ -8,6 +8,8 @@ import { espacios, tipografia } from '@/theme/tokens';
 import { Boton } from './Boton';
 
 interface Props {
+  /** Lo que se pregunta. Por defecto, el del Truco: seguir es corregir una carga. */
+  texto?: string;
   /** Cierra el aviso y se sigue jugando: por si fue un error de carga. */
   onSeguir: () => void;
   /** Finaliza la partida y va al podio. Si falla, el aviso lo dice. */
@@ -16,9 +18,10 @@ interface Props {
 
 /**
  * El cuerpo del aviso cuando alguien llega al objetivo (cambio 92). Va adentro
- * de un Popup: el del popup de carga, o el del tablero del Truco (cambio 93).
+ * de un Popup: el de SIGUIENTE en la partida (cambio 120), o el del tablero del
+ * Truco (cambio 93).
  */
-export function AvisoDeObjetivo({ onSeguir, onTerminar }: Props) {
+export function AvisoDeObjetivo({ texto = es.carga.terminarOSeguir, onSeguir, onTerminar }: Props) {
   const styles = useEstilos();
   const [terminando, setTerminando] = useState(false);
   const [errorAlTerminar, setErrorAlTerminar] = useState(false);
@@ -37,7 +40,7 @@ export function AvisoDeObjetivo({ onSeguir, onTerminar }: Props) {
 
   return (
     <>
-      <Text style={styles.texto}>{es.carga.terminarOSeguir}</Text>
+      <Text style={styles.texto}>{texto}</Text>
       {errorAlTerminar && <Text style={styles.error}>{es.comun.errorGuardar}</Text>}
       <View style={styles.botones}>
         <View style={styles.boton}>

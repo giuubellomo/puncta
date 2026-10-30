@@ -2,7 +2,8 @@ import { useCallback, useState } from 'react';
 
 import { faltantesParaEmpezar, maximoDeJugadores, type Faltante } from '@/domain/participantes';
 import { nombreDePartida } from '@/domain/partidas';
-import type { Partida, Participante } from '@/domain/types';
+import { esSimple } from '@/domain/simple';
+import type { ModoPuntos, Partida, Participante, Plantilla } from '@/domain/types';
 import { nuevoId } from '@/repositories/comun';
 import * as partidas from '@/repositories/partidas';
 
@@ -21,11 +22,18 @@ export interface ArmadoDePartida {
    * puede cambiar. null si la plantilla elegida no tiene.
    */
   objetivo: number | null;
-  cambiarObjetivo: (puntos: number) => void;
+  /** En la Simple tambien se saca o se pone: null es sin objetivo (cambio 121). */
+  cambiarObjetivo: (puntos: number | null) => void;
+  /**
+   * Cambio 121: si los puntos se suman o se restan, que en la Simple se elige al
+   * armar. null en las demas: queda el de la plantilla.
+   */
+  modoPuntos: ModoPuntos | null;
+  cambiarModoPuntos: (modo: ModoPuntos) => void;
   /** En el orden en que se agregaron: es el orden de la partida. */
   jugadores: Participante[];
-  /** Con el objetivo que trae la plantilla, que pisa al que se habia elegido para otra. */
-  elegirPlantilla: (id: string, objetivo: number | undefined) => void;
+  /** Con el objetivo (y en la Simple, el modo) que trae la plantilla: pisan a los elegidos para otra. */
+  elegirPlantilla: (plantilla: Plantilla) => void;
   /** No hace nada si ya estan los ocho (RF-605), o los dos del Truco (cambio 94). */
   agregarJugador: (datos: DatosJugador) => void;
   editarJugador: (id: string, datos: DatosJugador) => void;
@@ -53,6 +61,7 @@ export function useArmadoDePartida(): ArmadoDePartida {
   const [nombre, setNombre] = useState('');
   const [plantillaId, setPlantillaId] = useState<string | null>(null);
   const [objetivo, setObjetivo] = useState<number | null>(null);
+  const [modoPuntos, setModoPuntos] = useState<ModoPuntos | null>(null);
   const [jugadores, setJugadores] = useState<Participante[]>([]);
   const maximo = maximoDeJugadores(plantillaId);
 
@@ -61,6 +70,7 @@ export function useArmadoDePartida(): ArmadoDePartida {
     setNombre('');
     setPlantillaId(null);
     setObjetivo(null);
+    setModoPuntos(null);
     setJugadores([]);
   }, []);
 
@@ -70,10 +80,13 @@ export function useArmadoDePartida(): ArmadoDePartida {
     plantillaId,
     objetivo,
     cambiarObjetivo: setObjetivo,
+    modoPuntos,
+    cambiarModoPuntos: setModoPuntos,
     jugadores,
-    elegirPlantilla: (id, objetivoDeLaPlantilla) => {
-      setPlantillaId(id);
-      setObjetivo(objetivoDeLaPlantilla ?? null);
+    elegirPlantilla: (plantilla) => {
+      setPlantillaId(plantilla.id);
+      setObjetivo(plantilla.puntajeObjetivo ?? null);
+      setModoPuntos(esSimple(plantilla) ? plantilla.modoPuntos : null);
     },
     agregarJugador: (datos) =>
       setJugadores((previos) =>
@@ -95,6 +108,7 @@ export function useArmadoDePartida(): ArmadoDePartida {
           plantillaId,
           participantes: jugadores,
           ...(objetivo !== null && { puntajeObjetivo: objetivo }),
+          ...(modoPuntos !== null && { modoPuntos }),
         }),
       );
     },

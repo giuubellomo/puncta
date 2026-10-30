@@ -16,12 +16,14 @@ import { maximoDeJugadores, MINIMO_JUGADORES } from '@/domain/participantes';
 import { nombreDePartida } from '@/domain/partidas';
 import { aplicarCarga, marcarRegla as marcarEnRonda, puedeCerrarRonda } from '@/domain/rondas';
 import { aplicarManoDeCanasta, MAXIMO_TRESES, type ManoDeCanasta } from '@/domain/canasta';
+import { esSimple } from '@/domain/simple';
 import { RONDA_DEL_TRUCO, sumarAlPuntaje } from '@/domain/truco';
 import type {
   AvatarTipo,
   EntradaRonda,
   EstadoPartida,
   EstadoRonda,
+  ModoPuntos,
   Participante,
   Partida,
   Plantilla,
@@ -43,9 +45,11 @@ export interface DatosPartida {
   participantes: Participante[];
   /**
    * El objetivo elegido al armar (cambio 92). Pisa al de la plantilla en el
-   * snapshot, y solo se usa si la plantilla tiene uno.
+   * snapshot. En la Simple puede venir aunque la plantilla no tenga (cambio 121).
    */
   puntajeObjetivo?: number;
+  /** Cambio 121: en la Simple, si los puntos se suman o se restan. Pisa al de la plantilla. */
+  modoPuntos?: ModoPuntos;
 }
 
 interface FilaPartida {
@@ -135,12 +139,13 @@ export function crear(datos: DatosPartida): Promise<Partida> {
     const guardada = await plantillaDesdeBase(db, datos.plantillaId);
     if (guardada === null) throw new Error(`No existe la plantilla ${datos.plantillaId}`);
     const plantilla = snapshotDe(guardada);
-    if (plantilla.puntajeObjetivo !== undefined && datos.puntajeObjetivo !== undefined) {
+    if (datos.puntajeObjetivo !== undefined && (plantilla.puntajeObjetivo !== undefined || esSimple(plantilla))) {
       if (!(Number.isInteger(datos.puntajeObjetivo) && datos.puntajeObjetivo >= 1)) {
         throw new Error(`El objetivo va entero y positivo, llego ${datos.puntajeObjetivo}`);
       }
       plantilla.puntajeObjetivo = datos.puntajeObjetivo;
     }
+    if (datos.modoPuntos !== undefined && esSimple(plantilla)) plantilla.modoPuntos = datos.modoPuntos;
 
     if (!plantilla.rondasIlimitadas && plantilla.rondas.length === 0) {
       throw new Error(`La plantilla ${plantilla.id} no tiene rondas y no es de rondas ilimitadas`);
@@ -380,6 +385,29 @@ export function sumarPalitos(partidaId: string, participanteId: string, delta: n
 }
 
 /**
+ * Cambio 119: el objetivo de una ronda que se escribe al jugarla (la letra del
+ * Tutti Frutti). Solo si la plantilla lo pide y la ronda ya se juega o se
+ * jugo: una bloqueada todavia no tiene. Vacio lo borra.
+ */
+export function escribirObjetivo(partidaId: string, numeroRonda: number, objetivo: string): Promise<void> {
+  return escribir(async (db) => {
+    const partida = await partidaEditable(db, partidaId);
+    if (!partida.plantilla.objetivoEditable) {
+      throw new Error('Esta plantilla no deja escribir el objetivo de las rondas');
+    }
+    const ronda = partida.rondas.find((r) => r.numero === numeroRonda);
+    if (ronda === undefined) throw new Error(`La partida no tiene ronda ${numeroRonda}`);
+    if (ronda.estado === 'bloqueada') throw new Error(`La ronda ${numeroRonda} todavia no se juega`);
+    const limpio = objetivo.trim();
+    await db.runAsync('UPDATE ronda_partida SET objetivo = ? WHERE partida_id = ? AND numero = ?', [
+      limpio.length === 0 ? null : limpio,
+      partidaId,
+      numeroRonda,
+    ]);
+  });
+}
+
+/**
  * Paso 7.5. Cierra la ronda en curso y abre la siguiente, en la misma transaccion:
  * separadas, un corte entre las dos dejaria la partida sin ronda en curso.
  * Si la plantilla es de rondas ilimitadas y no hay siguiente, la crea.
@@ -528,6 +556,8 @@ function snapshotDe(plantilla: Plantilla): Plantilla {
     criterioVictoria: plantilla.criterioVictoria,
     rondasIlimitadas: plantilla.rondasIlimitadas,
     puntajeObjetivo: plantilla.puntajeObjetivo,
+    ayuda: plantilla.ayuda,
+    objetivoEditable: plantilla.objetivoEditable,
     reglas: plantilla.reglas.map((regla) => ({
       id: regla.id,
       titulo: regla.titulo,

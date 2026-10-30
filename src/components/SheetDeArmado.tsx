@@ -2,10 +2,10 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, Keyboard, Pressable, ScrollView, type ScrollViewInstance, Text, View } from 'react-native';
 
-import { MAXIMO_OBJETIVO, PASO_OBJETIVO } from '@/domain/objetivo';
+import { MAXIMO_OBJETIVO, OBJETIVO_POR_DEFECTO, PASO_OBJETIVO } from '@/domain/objetivo';
 import { EQUIPOS_DEL_TRUCO, maximoDeJugadores, MINIMO_JUGADORES, type Faltante } from '@/domain/participantes';
 import { LARGO_MAXIMO_NOMBRE_PARTIDA } from '@/domain/partidas';
-import type { Participante, Partida } from '@/domain/types';
+import type { ModoPuntos, Participante, Partida } from '@/domain/types';
 import { useArmadoDePartida } from '@/hooks/useArmadoDePartida';
 import { usePlantillas } from '@/hooks/usePlantillas';
 import { es } from '@/i18n/es';
@@ -20,6 +20,7 @@ import { CampoTexto } from './CampoTexto';
 import { Card } from './Card';
 import { Etiqueta } from './Etiqueta';
 import { PopupParticipante } from './PopupParticipante';
+import { Segmented } from './Segmented';
 import { Stepper } from './Stepper';
 
 const LADO_AVATAR = 60;
@@ -150,7 +151,7 @@ export function SheetDeArmado({ visible, onCerrar }: Props) {
               estado={plantilla.id === armado.plantillaId ? 'seleccionada' : 'normal'}
               onPress={() => {
                 Keyboard.dismiss();
-                armado.elegirPlantilla(plantilla.id, plantilla.puntajeObjetivo);
+                armado.elegirPlantilla(plantilla);
               }}
               etiqueta={plantilla.nombre}
               style={styles.plantilla}
@@ -166,23 +167,59 @@ export function SheetDeArmado({ visible, onCerrar }: Props) {
         </Grilla>
       </View>
 
-      {/* Cambio 92: solo si la plantilla tiene objetivo. Viene de ahi y se cambia para esta partida. */}
-      {armado.objetivo !== null && (
+      {/* Cambio 121: en la Simple, suma o resta se elige aca. */}
+      {armado.modoPuntos !== null && (
+        <View style={styles.seccion}>
+          <Etiqueta texto={es.plantilla.puntosDeCadaRonda} />
+          <Segmented<ModoPuntos>
+            opciones={[
+              { valor: 'suma', etiqueta: es.plantilla.seSuman, icono: iconos.mas },
+              { valor: 'resta', etiqueta: es.plantilla.seRestan, icono: iconos.menos },
+            ]}
+            seleccionado={armado.modoPuntos}
+            onCambiar={(modo) => {
+              Keyboard.dismiss();
+              armado.cambiarModoPuntos(modo);
+            }}
+          />
+        </View>
+      )}
+
+      {/* Cambio 92: si la plantilla tiene objetivo, viene de ahi y se cambia para esta
+          partida. En la Simple (cambio 121) ademas se pone o se saca. */}
+      {(armado.objetivo !== null || armado.modoPuntos !== null) && (
         <View style={styles.seccion}>
           <Etiqueta texto={es.nuevaPartida.objetivo} />
-          <Stepper
-            valor={armado.objetivo}
-            onCambiar={armado.cambiarObjetivo}
-            etiquetaRestar={es.comun.restar}
-            etiquetaSumar={es.comun.sumar}
-            paso={PASO_OBJETIVO}
-            minimo={1}
-            maximo={MAXIMO_OBJETIVO}
-            formato={es.comun.puntosSinSigno}
-            escribible
-            etiquetaEscribir={es.comun.escribirObjetivo}
-          />
-          <Text style={styles.ayuda}>{es.nuevaPartida.ayudaObjetivo}</Text>
+          {armado.modoPuntos !== null && (
+            <Segmented<'sin' | 'con'>
+              opciones={[
+                { valor: 'sin', etiqueta: es.plantilla.sinObjetivo },
+                { valor: 'con', etiqueta: es.plantilla.conObjetivo },
+              ]}
+              seleccionado={armado.objetivo === null ? 'sin' : 'con'}
+              onCambiar={(opcion) => {
+                Keyboard.dismiss();
+                armado.cambiarObjetivo(opcion === 'con' ? OBJETIVO_POR_DEFECTO : null);
+              }}
+            />
+          )}
+          {armado.objetivo !== null && (
+            <>
+              <Stepper
+                valor={armado.objetivo}
+                onCambiar={armado.cambiarObjetivo}
+                etiquetaRestar={es.comun.restar}
+                etiquetaSumar={es.comun.sumar}
+                paso={PASO_OBJETIVO}
+                minimo={1}
+                maximo={MAXIMO_OBJETIVO}
+                formato={es.comun.puntosSinSigno}
+                escribible
+                etiquetaEscribir={es.comun.escribirObjetivo}
+              />
+              <Text style={styles.ayuda}>{es.nuevaPartida.ayudaObjetivo}</Text>
+            </>
+          )}
         </View>
       )}
 

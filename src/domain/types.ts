@@ -55,6 +55,16 @@ export interface Plantilla {
    * el snapshot de una partida es el que se eligio al armarla.
    */
   puntajeObjetivo?: number;
+  /**
+   * Un texto corto para tener a mano en la mesa: cuanto vale cada carta, como
+   * se cuenta (cambio 119). Se abre con el «?» de la partida. Sin el campo, no hay.
+   */
+  ayuda?: string;
+  /**
+   * El objetivo de cada ronda se escribe al jugarla, como la letra del Tutti
+   * Frutti (cambio 119). Sin el campo, sale de las rondas de la plantilla.
+   */
+  objetivoEditable?: true;
   reglas: Regla[];
   rondas: RondaDefinida[];
 }

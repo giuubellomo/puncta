@@ -9,13 +9,14 @@ import {
   reglasSinAsignar,
 } from '@/domain/rondas';
 import { esCanasta, minimoParaBajar } from '@/domain/canasta';
+import { llegoHastaRonda } from '@/domain/objetivo';
 import { ordenarPorTotalHastaRonda } from '@/domain/ranking';
 import { mejoresDeRonda, puntajeCargado, totalHastaRonda } from '@/domain/scoring';
 import type { Participante, Partida, Plantilla, RondaJugada } from '@/domain/types';
 import { conSigno, es } from '@/i18n/es';
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, espacios, numerales, radios, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
 import { Boton } from './Boton';
@@ -34,8 +35,13 @@ interface Props {
   expandida?: boolean;
   /** Tocar una ronda cerrada la expande o la vuelve a colapsar. */
   onAlternar?: () => void;
-  /** SIGUIENTE: cierra la ronda en juego y abre la que sigue (7.5). */
-  onSiguiente?: () => Promise<void>;
+  /**
+   * SIGUIENTE: cierra la ronda en juego y abre la que sigue (7.5). Da false si
+   * no avanzo: se aviso que alguien llego al objetivo y se cerro el aviso (cambio 120).
+   */
+  onSiguiente?: () => Promise<boolean>;
+  /** Cambio 119: el objetivo se escribe al jugar. Con esto, se toca para escribirlo. */
+  onTocarObjetivo?: () => void;
 }
 
 /**
@@ -55,13 +61,16 @@ export function TarjetaDeRonda({
   onSiguiente,
   expandida = false,
   onAlternar,
+  onTocarObjetivo,
 }: Props) {
   const styles = useEstilos();
   const titulo = es.ronda.titulo(ronda.numero);
   const completada = <Text style={styles.completada}>{`${iconos.tilde} ${es.partida.completada}`}</Text>;
 
   if (ronda.estado === 'cerrada' && expandida) {
-    const cabecera = <Cabecera ronda={ronda} partida={partida} titulo={titulo} marca={completada} />;
+    const cabecera = (
+      <Cabecera ronda={ronda} partida={partida} titulo={titulo} marca={completada} onTocarObjetivo={onTocarObjetivo} />
+    );
     return (
       <Card>
         {/* Sin onAlternar no se pliega (una ronda por pantalla, cambio 100): la cabecera no se toca. */}
@@ -122,6 +131,7 @@ export function TarjetaDeRonda({
         partida={partida}
         titulo={titulo}
         marca={<Chip texto={es.partida.enJuego} variante="borde" />}
+        onTocarObjetivo={onTocarObjetivo}
       />
       <Filas ronda={ronda} partida={partida} onTocarParticipante={onTocarParticipante} ordenadas />
       {onSiguiente !== undefined && haySiguienteRonda(partida, ronda.numero) && (
@@ -137,12 +147,33 @@ interface PropsCabecera {
   titulo: string;
   /** A la derecha del titulo: EN JUEGO o ✓ Completada. */
   marca: ReactNode;
+  onTocarObjetivo?: () => void;
 }
 
 /** Titulo, objetivo y lo que valen las reglas, con la linea que la separa de las filas. */
-function Cabecera({ ronda, partida, titulo, marca }: PropsCabecera) {
+function Cabecera({ ronda, partida, titulo, marca, onTocarObjetivo }: PropsCabecera) {
   const styles = useEstilos();
   const reglas = reglasConPuntaje(ronda, partida.plantilla);
+  const objetivo =
+    onTocarObjetivo === undefined ? (
+      ronda.objetivo !== undefined && <Text style={styles.detalle}>{es.partida.objetivo(ronda.objetivo)}</Text>
+    ) : (
+      // Cambio 119: se escribe al jugar. Sin escribir todavia, la invitacion en el color de acento.
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={
+          ronda.objetivo === undefined ? es.partida.escribirObjetivo : es.partida.cambiarObjetivo(ronda.objetivo)
+        }
+        onPress={onTocarObjetivo}
+        hitSlop={espacios.xs}
+        style={({ pressed }) => [styles.objetivoTocable, pressed && styles.presionada]}
+      >
+        <Text style={[styles.detalle, ronda.objetivo === undefined && styles.objetivoVacio]}>
+          {ronda.objetivo === undefined ? es.partida.escribirObjetivo : es.partida.objetivo(ronda.objetivo)}
+        </Text>
+        <Text style={[styles.detalle, styles.objetivoVacio]}>{iconos.lapiz}</Text>
+      </Pressable>
+    );
   return (
     <View style={styles.cabecera}>
       <View style={styles.fila}>
@@ -151,7 +182,7 @@ function Cabecera({ ronda, partida, titulo, marca }: PropsCabecera) {
         </Text>
         {marca}
       </View>
-      {ronda.objetivo !== undefined && <Text style={styles.detalle}>{es.partida.objetivo(ronda.objetivo)}</Text>}
+      {objetivo}
       {reglas.length > 0 && <Text style={[styles.reglas, numerales]}>{reglas.join(' · ')}</Text>}
     </View>
   );
@@ -177,6 +208,7 @@ function Filas({ ronda, partida, onTocarParticipante, ordenadas = false }: Props
         puntaje={puntajeCargado(ronda, partida.plantilla, participante.id)}
         total={totalHastaRonda(partida, participante.id, ronda.numero)}
         reglas={detalleDeFila(ronda, partida, participante.id)}
+        llego={llegoHastaRonda(partida, participante.id, ronda.numero)}
         onPress={onTocarParticipante && (() => onTocarParticipante(participante.id))}
       />
     );
@@ -241,7 +273,7 @@ function Siguiente({ ronda, partida, onSiguiente }: Required<Pick<Props, 'ronda'
     try {
       // Si sale bien esta tarjeta pasa a ser la de una ronda cerrada y este
       // estado se desmonta: no hace falta volver `avanzando` a false.
-      await onSiguiente();
+      if (!(await onSiguiente())) setAvanzando(false);
     } catch {
       setErrorAlAvanzar(true);
       setAvanzando(false);
@@ -265,6 +297,8 @@ interface PropsFila {
   total: number;
   /** Los titulos de las reglas que tiene marcadas en la ronda: «Bajó primero». */
   reglas: string[];
+  /** Con el acumulado hasta esta ronda llego al objetivo: la casilla lleva una estrella (cambio 120). */
+  llego: boolean;
   onPress?: () => void;
 }
 
@@ -272,9 +306,10 @@ interface PropsFila {
  * Mockup 4 y 5: avatar, nombre y a la derecha la casilla con el puntaje de la
  * ronda. Sin cargar, la casilla queda punteada con una raya: un lugar vacio
  * que se toca para cargar. A-6: el acumulado a la derecha, mas chico y en gris.
- * Debajo del nombre, las reglas que se llevo en la ronda (cambio 77).
+ * Debajo del nombre, las reglas que se llevo en la ronda (cambio 77). Si llego
+ * al objetivo, la casilla se pinta y lleva una estrella (cambio 120).
  */
-function FilaDeParticipante({ participante, puntaje, total, reglas, onPress }: PropsFila) {
+function FilaDeParticipante({ participante, puntaje, total, reglas, llego, onPress }: PropsFila) {
   const styles = useEstilos();
   const vacia = puntaje === null;
   const valor = vacia ? es.partida.sinCargar : conSigno(puntaje);
@@ -285,15 +320,24 @@ function FilaDeParticipante({ participante, puntaje, total, reglas, onPress }: P
         <Text style={styles.nombre}>{participante.nombre}</Text>
         {reglas.length > 0 && <Text style={styles.reglasDelJugador}>{reglas.join(' · ')}</Text>}
       </View>
-      <View style={[styles.casilla, vacia && styles.casillaVacia]}>
-        <Text style={[styles.puntaje, numerales, vacia && styles.puntajeVacio]}>
+      <View style={[styles.casilla, vacia && styles.casillaVacia, llego && styles.casillaLlego]}>
+        {llego && (
+          <Text allowFontScaling={false} style={styles.estrella}>
+            {iconos.estrella}
+          </Text>
+        )}
+        <Text style={[styles.puntaje, numerales, vacia && styles.puntajeVacio, llego && styles.puntajeLlego]}>
           {vacia ? iconos.raya : valor}
         </Text>
       </View>
       <Text style={[styles.total, numerales]}>{conSigno(total)}</Text>
     </>
   );
-  const etiqueta = [es.partida.puntajeDe(participante.nombre, valor, conSigno(total)), ...reglas].join(', ');
+  const etiqueta = [
+    es.partida.puntajeDe(participante.nombre, valor, conSigno(total)),
+    ...(llego ? [es.partida.llegoAlObjetivo] : []),
+    ...reglas,
+  ].join(', ');
 
   if (onPress === undefined) {
     return (
@@ -369,6 +413,8 @@ const useEstilos = crearEstilos((colores) => ({
   textos: { flex: 1, gap: espacios.xxs },
   titulo: { ...tipografia.tituloChico, color: colores.tinta },
   detalle: { ...tipografia.secundario, color: colores.grisOscuro },
+  objetivoTocable: { flexDirection: 'row', alignItems: 'center', gap: espacios.xxs, alignSelf: 'flex-start' },
+  objetivoVacio: { color: colores.acento, fontFamily: fuentes.cuerpoBold },
   completada: { ...tipografia.chico, color: colores.grisOscuro },
   apagado: { color: colores.grisMedio },
   cabecera: {
@@ -396,7 +442,10 @@ const useEstilos = crearEstilos((colores) => ({
   reglasDelJugador: { ...tipografia.chico, color: colores.grisOscuro },
   casilla: {
     minWidth: 68,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: espacios.xxs,
     paddingHorizontal: espacios.sm,
     paddingVertical: espacios.xs - 2,
     borderRadius: radios.xs,
@@ -406,6 +455,9 @@ const useEstilos = crearEstilos((colores) => ({
   casillaVacia: { borderStyle: 'dashed', borderColor: colores.linea },
   puntaje: { ...tipografia.cuerpoFuerte, color: colores.tinta },
   puntajeVacio: { color: colores.grisMedio },
+  casillaLlego: { backgroundColor: colores.destacado, borderStyle: 'solid', borderColor: colores.borde },
+  estrella: { color: colores.sobreDestacado, fontSize: 14 },
+  puntajeLlego: { color: colores.sobreDestacado },
   // Ancho fijo: los totales quedan en columna aunque cambie la cantidad de digitos.
   total: { ...tipografia.secundario, color: colores.grisOscuro, minWidth: 44, textAlign: 'right' },
 }));

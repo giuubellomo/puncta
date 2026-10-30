@@ -6,9 +6,8 @@
  * gana: eso lo decide `criterioVictoria` en el podio (`rankear`). Con «menor»,
  * el que llega corta la partida y gana el mas bajo, como en Corazones.
  */
-import { aplicarCarga } from './rondas';
-import { totalDeParticipante } from './scoring';
-import type { Partida, RondaJugada } from './types';
+import { totalDeParticipante, totalHastaRonda } from './scoring';
+import type { Partida } from './types';
 
 /** Con lo que arranca el objetivo al activarlo en el editor. */
 export const OBJETIVO_POR_DEFECTO = 100;
@@ -26,34 +25,26 @@ export function llegaronAlObjetivo(partida: Partida): string[] {
 }
 
 /**
- * Quienes llegarian recien con esa carga del popup: los que llegan despues y
- * no habian llegado antes. Es lo que dispara el aviso al guardar. Si ya habia
- * llegado y se siguio jugando, no se vuelve a avisar por el mismo.
+ * Si un participante llego al objetivo con el acumulado hasta esa ronda. Es la
+ * estrella de su casilla en la ronda (cambio 120).
  */
-export function nuevosEnElObjetivo(
-  partida: Partida,
-  numeroRonda: number,
-  participanteId: string,
-  puntosManuales: number,
-  reglasMarcadas: string[],
-): string[] {
-  const ronda = partida.rondas.find((r) => r.numero === numeroRonda);
-  if (ronda === undefined) return [];
-  return nuevosConRonda(
-    partida,
-    aplicarCarga(ronda, partida.plantilla, participanteId, puntosManuales, reglasMarcadas),
-  );
+export function llegoHastaRonda(partida: Partida, participanteId: string, numeroRonda: number): boolean {
+  const objetivo = partida.plantilla.puntajeObjetivo;
+  if (objetivo === undefined) return false;
+  return Math.abs(totalHastaRonda(partida, participanteId, numeroRonda)) >= objetivo;
 }
 
 /**
- * Lo mismo, con la ronda ya armada como va a quedar: la usa la calculadora de la
- * Canasta (cambio 101), que no carga por `aplicarCarga`.
+ * Quienes llegaron recien en esa ronda: con ella si, sin ella no. Es lo que
+ * dispara el aviso al tocar SIGUIENTE (cambio 120). Si ya habia llegado y se
+ * siguio jugando, no se vuelve a avisar por el mismo.
  */
-export function nuevosConRonda(partida: Partida, rondaNueva: RondaJugada): string[] {
-  const antes = new Set(llegaronAlObjetivo(partida));
-  const despues: Partida = {
-    ...partida,
-    rondas: partida.rondas.map((ronda) => (ronda.numero === rondaNueva.numero ? rondaNueva : ronda)),
-  };
-  return llegaronAlObjetivo(despues).filter((id) => !antes.has(id));
+export function nuevosEnLaRonda(partida: Partida, numeroRonda: number): string[] {
+  return partida.participantes
+    .filter(
+      (participante) =>
+        llegoHastaRonda(partida, participante.id, numeroRonda) &&
+        !llegoHastaRonda(partida, participante.id, numeroRonda - 1),
+    )
+    .map((participante) => participante.id);
 }

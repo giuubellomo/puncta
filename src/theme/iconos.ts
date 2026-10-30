@@ -25,6 +25,12 @@ export const iconos = {
   /** El icono elegido de una plantilla, que se toca para ver los demas (cambio 98). */
   desplegar: '▾',
   plegar: '▴',
+  /** La ayuda de la plantilla, en la partida (cambio 119). */
+  ayuda: '?',
+  /** Escribir el objetivo de una ronda (cambio 119). */
+  lapiz: `✎${TEXTO}`,
+  /** En la casilla de quien llego al objetivo (cambio 120). */
+  estrella: '★',
 } as const;
 
 /**
@@ -38,6 +44,10 @@ export const ICONOS_PLANTILLA: Record<string, string> = {
   palitos: '⊠',
   /** La Canasta (cambio 101). */
   canasta: `♣${TEXTO}`,
+  /** Para las plantillas propias (cambio 119). */
+  numeros: '①',
+  dado: `⚅${TEXTO}`,
+  estrella: '★',
 };
 
 /** El glifo de una clave de plantilla. Una clave desconocida no rompe: muestra un punto. */

@@ -27,8 +27,13 @@ interface Props {
   rondas: RondaJugada[];
   /** Tocar a un participante en la ronda en juego o en una cerrada: abre el popup de carga. */
   onTocarParticipante: (numeroRonda: number, participanteId: string) => void;
-  /** SIGUIENTE: cierra la ronda en juego. Despues se pasa sola a la pagina de la nueva. */
-  onSiguiente: (numeroRonda: number) => Promise<void>;
+  /**
+   * SIGUIENTE: cierra la ronda en juego. Despues se pasa sola a la pagina de la
+   * nueva, salvo que de false (no se cerro: cambio 120).
+   */
+  onSiguiente: (numeroRonda: number) => Promise<boolean>;
+  /** Cambio 119: si la plantilla lo pide, tocar el objetivo de una ronda lo deja escribir. */
+  onTocarObjetivo?: (numeroRonda: number) => void;
 }
 
 /**
@@ -39,7 +44,7 @@ interface Props {
  * Abre en la ronda en juego. Una cerrada se ve entera y se corrige tocando a un
  * participante (RF-709); las que faltan se ven bloqueadas.
  */
-export function PaginasDeRondas({ partida, rondas, onTocarParticipante, onSiguiente }: Props) {
+export function PaginasDeRondas({ partida, rondas, onTocarParticipante, onSiguiente, onTocarObjetivo }: Props) {
   const styles = useEstilos();
   const { width } = useWindowDimensions();
   const paginas = useRef<ScrollViewInstance>(null);
@@ -129,9 +134,11 @@ export function PaginasDeRondas({ partida, rondas, onTocarParticipante, onSiguie
               partida={partida}
               expandida
               onTocarParticipante={(participanteId) => onTocarParticipante(otra.numero, participanteId)}
+              onTocarObjetivo={onTocarObjetivo && (() => onTocarObjetivo(otra.numero))}
               onSiguiente={async () => {
-                await onSiguiente(otra.numero);
-                ir(i + 1);
+                const avanzo = await onSiguiente(otra.numero);
+                if (avanzo) ir(i + 1);
+                return avanzo;
               }}
             />
           </ScrollView>

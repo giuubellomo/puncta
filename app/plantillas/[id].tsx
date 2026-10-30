@@ -44,6 +44,9 @@ const LARGO_MAXIMO_NOMBRE = 30;
  * con cambios sin guardar pregunta antes de descartarlos. Una predefinida se
  * abre igual, para ver lo que trae, y guardar crea una copia (cambio 64).
  */
+/** La ayuda es para leer de un vistazo en la mesa (cambio 119). */
+const LARGO_MAXIMO_AYUDA = 300;
+
 export default function EditorDePlantilla() {
   const styles = useEstilos();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -238,6 +241,35 @@ export default function EditorDePlantilla() {
                 <Text style={styles.ayuda}>{es.plantilla.ayudaObjetivo(borrador.criterioVictoria)}</Text>
               </>
             )}
+          </View>
+
+          {/* Cambio 119: el objetivo de cada ronda, de la plantilla o escrito al jugar. */}
+          <View style={styles.seccion}>
+            <Etiqueta texto={es.plantilla.objetivoDeRonda} />
+            <Segmented<'plantilla' | 'jugar'>
+              opciones={[
+                { valor: 'plantilla', etiqueta: es.plantilla.objetivoDeLaPlantilla },
+                { valor: 'jugar', etiqueta: es.plantilla.objetivoAlJugar },
+              ]}
+              seleccionado={borrador.objetivoEditable ? 'jugar' : 'plantilla'}
+              onCambiar={(opcion) => {
+                Keyboard.dismiss();
+                cambiar({ objetivoEditable: opcion === 'jugar' ? true : undefined });
+              }}
+            />
+            {borrador.objetivoEditable && <Text style={styles.ayuda}>{es.plantilla.ayudaObjetivoAlJugar}</Text>}
+          </View>
+
+          <View style={styles.seccion}>
+            <CampoTexto
+              etiqueta={es.plantilla.textoDeAyuda}
+              valor={borrador.ayuda ?? ''}
+              onCambiar={(ayuda) => cambiar({ ayuda: ayuda.length === 0 ? undefined : ayuda })}
+              placeholder={es.plantilla.ejemploAyuda}
+              multiline
+              maxLength={LARGO_MAXIMO_AYUDA}
+            />
+            <Text style={styles.ayuda}>{es.plantilla.ayudaDeAyuda}</Text>
           </View>
 
           <ListaDeReglas

@@ -1,4 +1,4 @@
-import { llegaronAlObjetivo, nuevosEnElObjetivo } from '../objetivo';
+import { llegaronAlObjetivo, llegoHastaRonda, nuevosEnLaRonda } from '../objetivo';
 import type { ModoPuntos, Partida } from '../types';
 
 /** Dos rondas en Simple: la 1 cerrada con `primera`, la 2 en curso vacia. */
@@ -45,20 +45,47 @@ describe('llegaronAlObjetivo', () => {
   });
 });
 
-describe('nuevosEnElObjetivo', () => {
-  it('avisa por quien llega con esta carga', () => {
-    expect(nuevosEnElObjetivo(partida({ a: 25, b: 10 }, 30), 2, 'a', 5, [])).toEqual(['a']);
+/** La misma partida con la ronda 2 ya cargada. */
+function conSegunda(base: Partida, segunda: Record<string, number>): Partida {
+  return {
+    ...base,
+    rondas: base.rondas.map((ronda) =>
+      ronda.numero === 2
+        ? {
+            ...ronda,
+            entradas: Object.entries(segunda).map(([id, puntos]) => ({ participanteId: id, puntosManuales: puntos, marcas: {} })),
+          }
+        : ronda,
+    ),
+  };
+}
+
+describe('llegoHastaRonda', () => {
+  it('mira el acumulado hasta esa ronda, no el de toda la partida', () => {
+    const p = conSegunda(partida({ a: 25, b: 10 }, 30), { a: 5, b: 0 });
+    expect(llegoHastaRonda(p, 'a', 1)).toBe(false);
+    expect(llegoHastaRonda(p, 'a', 2)).toBe(true);
   });
 
-  it('no avisa si no llega', () => {
-    expect(nuevosEnElObjetivo(partida({ a: 25, b: 10 }, 30), 2, 'a', 4, [])).toEqual([]);
+  it('sin objetivo nunca llega', () => {
+    expect(llegoHastaRonda(partida({ a: 900, b: 10 }), 'a', 1)).toBe(false);
+  });
+});
+
+describe('nuevosEnLaRonda', () => {
+  it('avisa por quien llega en esta ronda', () => {
+    expect(nuevosEnLaRonda(conSegunda(partida({ a: 25, b: 10 }, 30), { a: 5, b: 4 }), 2)).toEqual(['a']);
+  });
+
+  it('no avisa si no llega nadie', () => {
+    expect(nuevosEnLaRonda(conSegunda(partida({ a: 25, b: 10 }, 30), { a: 4, b: 4 }), 2)).toEqual([]);
   });
 
   it('no vuelve a avisar por quien ya habia llegado', () => {
-    expect(nuevosEnElObjetivo(partida({ a: 30, b: 10 }, 30), 2, 'a', 3, [])).toEqual([]);
+    expect(nuevosEnLaRonda(conSegunda(partida({ a: 30, b: 10 }, 30), { a: 3, b: 0 }), 2)).toEqual([]);
   });
 
-  it('sin objetivo no avisa nunca', () => {
-    expect(nuevosEnElObjetivo(partida({ a: 25, b: 10 }), 2, 'a', 500, [])).toEqual([]);
+  it('avisa por varios a la vez', () => {
+    expect(nuevosEnLaRonda(conSegunda(partida({ a: 25, b: 28 }, 30), { a: 5, b: 2 }), 2)).toEqual(['a', 'b']);
   });
 });

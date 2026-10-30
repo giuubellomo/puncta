@@ -2,7 +2,6 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Keyboard, StyleSheet, Text, View } from 'react-native';
 
 import {
-  aplicarManoDeCanasta,
   hizoCanasta,
   manoDesdeMarcas,
   MAXIMO_TRESES,
@@ -16,14 +15,12 @@ import {
   type Cierre,
   type ManoDeCanasta,
 } from '@/domain/canasta';
-import { nuevosConRonda } from '@/domain/objetivo';
 import type { Participante, Partida, RondaJugada } from '@/domain/types';
 import { conSigno, es } from '@/i18n/es';
 import { crearEstilos } from '@/theme/tema';
 import { espacios, fuentes, numerales, tipografia } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
-import { AvisoDeObjetivo } from './AvisoDeObjetivo';
 import { Boton } from './Boton';
 import { Popup } from './Popup';
 import { Segmented } from './Segmented';
@@ -42,43 +39,23 @@ interface Props {
   onCerrar: () => void;
   /** Escribe la mano en la base. Si falla, deja pasar el error. */
   onGuardar: (mano: ManoDeCanasta) => Promise<void>;
-  /** TERMINAR del aviso de objetivo. */
-  onTerminar: () => Promise<void>;
 }
 
 /**
  * La calculadora de una mano de Canasta (cambio 101): cierre, canastas limpias
  * y sucias, treses rojos y negros, y los puntos de las cartas bajadas y de las
  * que quedaron en la mano, con el total abajo (orden y treses del cambio 102). Hace las veces del popup de carga para esta
- * plantilla, y como el, si alguien llega al objetivo pasa al aviso.
+ * plantilla. Como en el, llegar al objetivo se avisa al tocar SIGUIENTE (cambio 120).
  */
-export function PopupDeCanasta({ visible, partida, numeroRonda, participanteId, onCerrar, onGuardar, onTerminar }: Props) {
+export function PopupDeCanasta({ visible, partida, numeroRonda, participanteId, onCerrar, onGuardar }: Props) {
   const styles = useEstilos();
   const [apertura, setApertura] = useState(0);
-  const [llegaron, setLlegaron] = useState<string[] | null>(null);
   useEffect(() => {
-    if (!visible) return;
-    setApertura((n) => n + 1);
-    setLlegaron(null);
+    if (visible) setApertura((n) => n + 1);
   }, [visible]);
 
   const participante = partida.participantes.find((p) => p.id === participanteId);
   const ronda = partida.rondas.find((r) => r.numero === numeroRonda);
-  const objetivo = partida.plantilla.puntajeObjetivo;
-
-  if (llegaron !== null && objetivo !== undefined) {
-    return (
-      <Popup
-        visible={visible}
-        onCerrar={onCerrar}
-        etiquetaCerrar={es.comun.cerrar}
-        titulo={es.carga.llegoAlObjetivo(llegaron, objetivo)}
-      >
-        <AvisoDeObjetivo onSeguir={onCerrar} onTerminar={onTerminar} />
-      </Popup>
-    );
-  }
-
   return (
     <Popup
       visible={visible}
@@ -105,14 +82,8 @@ export function PopupDeCanasta({ visible, partida, numeroRonda, participanteId, 
           ronda={ronda}
           participante={participante}
           onGuardar={async (mano) => {
-            // Antes de guardar: despues `partida` ya trae la mano y no hay con que comparar.
-            const nuevos = nuevosConRonda(partida, aplicarManoDeCanasta(ronda, participante.id, mano));
             await onGuardar(mano);
-            if (nuevos.length === 0) {
-              onCerrar();
-              return;
-            }
-            setLlegaron(nuevos.map((id) => partida.participantes.find((p) => p.id === id)?.nombre ?? ''));
+            onCerrar();
           }}
         />
       )}

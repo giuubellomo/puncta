@@ -128,6 +128,28 @@ export const MIGRACIONES: Migracion[] = [
           AND avatar_valor_snapshot NOT IN ('bomba', 'fiaca', 'pincho', 'tembli', 'mimi', 'glup', 'profe', 'sombra');
       DROP TABLE personaje_de;`,
   },
+  {
+    // Cambio 119: el texto de ayuda de una plantilla, y si el objetivo de cada
+    // ronda se escribe al jugar. Las plantillas que ya estan quedan sin ayuda y
+    // con los objetivos de siempre.
+    version: 10,
+    nombre: 'ayuda y objetivo al jugar',
+    sql: `ALTER TABLE plantilla ADD COLUMN ayuda TEXT;
+      ALTER TABLE plantilla ADD COLUMN objetivo_editable INTEGER NOT NULL DEFAULT 0;`,
+  },
+  {
+    // Cambio 121: se sacan las predefinidas UNO, Generala, Tutti Frutti y Conga
+    // del cambio 119, por si ya habian entrado. Reglas y rondas se van en cascada;
+    // las partidas no las tocan: guardan su copia de la plantilla.
+    version: 11,
+    nombre: 'sin UNO, Generala, Tutti Frutti ni Conga',
+    sql: `DELETE FROM plantilla WHERE es_predefinida = 1 AND id IN (
+        'e03d298d-5e7a-4aee-9018-008183fb38e1',
+        '1cb3ed11-d548-443f-b8c5-64ee655e6b74',
+        'bf1ad40c-d11b-4445-a8bd-0a57e7fd0d64',
+        '6a96a446-8356-479b-822e-059b3ecc76e7'
+      );`,
+  },
 ];
 
 /** La version mas alta que conoce este build. */
