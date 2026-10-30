@@ -25,12 +25,8 @@ export const iconos = {
   /** El icono elegido de una plantilla, que se toca para ver los demas (cambio 98). */
   desplegar: '▾',
   plegar: '▴',
-  /** La ayuda de la plantilla, en la partida (cambio 119). */
-  ayuda: '?',
   /** Escribir el objetivo de una ronda (cambio 119). */
   lapiz: `✎${TEXTO}`,
-  /** Ver la planilla de toda la partida (cambio 123). */
-  planilla: '▦',
   /** En la casilla de quien llego al objetivo (cambio 120). */
   estrella: '★',
 } as const;

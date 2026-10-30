@@ -240,6 +240,12 @@ export const es = {
     /** Cambio 122: debajo del total. Restando, con el signo: «faltan −70». */
     faltan: (puntos: number, modo: 'suma' | 'resta') => `faltan ${modo === 'resta' ? conSigno(-puntos) : puntos}`,
     llego: 'llegó',
+    /** Cambio 125: debajo del nombre, sin el «+»: «Total 72», «Total −40». */
+    total: (puntos: number) => `Total ${puntos < 0 ? `−${Math.abs(puntos)}` : puntos}`,
+    /** Arriba, debajo del nombre de la partida: «Hasta 150 pts · gana el que menos tiene». */
+    subtitulo: (objetivo: number | undefined, criterio: 'menor' | 'mayor') =>
+      [...(objetivo === undefined ? [] : [`Hasta ${objetivo} pts`]), `gana el que ${criterio === 'menor' ? 'menos' : 'más'} tiene`].join(' · '),
+    irALaRondaEnJuego: 'Ir a la ronda en juego',
     verPlanilla: 'Ver la planilla',
     // Cambio 119: el objetivo que se escribe al jugar y la ayuda de la plantilla
     escribirObjetivo: 'Escribir el objetivo',

@@ -7,6 +7,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { AvisoDeObjetivo } from '@/components/AvisoDeObjetivo';
 import { Boton } from '@/components/Boton';
 import { BotonIcono } from '@/components/BotonIcono';
+import { BotonLiviano } from '@/components/BotonLiviano';
 import { CampoTexto } from '@/components/CampoTexto';
 import { PaginasDeRondas } from '@/components/PaginasDeRondas';
 import { Popup } from '@/components/Popup';
@@ -110,6 +111,11 @@ export default function PantallaDePartida() {
     irAlPodio();
   };
 
+  const pedirTerminar = () => {
+    setErrorAlTerminar(false);
+    setConfirmando(true);
+  };
+
   const objetivo = partida.plantilla.puntajeObjetivo;
   const { ayuda } = partida.plantilla;
 
@@ -139,20 +145,15 @@ export default function PantallaDePartida() {
           <Text accessibilityRole="header" style={styles.titulo}>
             {partida.nombre}
           </Text>
-          {objetivo !== undefined && <Text style={styles.hasta}>{es.partida.hasta(objetivo)}</Text>}
+          <Text style={styles.hasta}>{es.partida.subtitulo(objetivo, partida.plantilla.criterioVictoria)}</Text>
         </View>
         {/* Cambio 123: toda la partida en una tabla. El Truco no tiene rondas. */}
         {!esTruco(partida.plantilla) && (
-          <BotonIcono
-            icono={iconos.planilla}
-            etiqueta={es.partida.verPlanilla}
-            tamano={36}
-            onPress={() => setViendoPlanilla(true)}
-          />
+          <BotonLiviano icono="planilla" etiqueta={es.partida.verPlanilla} onPress={() => setViendoPlanilla(true)} />
         )}
         {/* Cambio 119: como se cuenta, a mano en la mesa. */}
         {ayuda !== undefined && (
-          <BotonIcono icono={iconos.ayuda} etiqueta={es.partida.verAyuda} tamano={36} onPress={() => setViendoAyuda(true)} />
+          <BotonLiviano icono="ayuda" etiqueta={es.partida.verAyuda} onPress={() => setViendoAyuda(true)} />
         )}
       </View>
 
@@ -175,19 +176,16 @@ export default function PantallaDePartida() {
           }}
           onSiguiente={siguiente}
           onTocarObjetivo={partida.plantilla.objetivoEditable ? abrirObjetivo : undefined}
+          onTerminar={pedirTerminar}
         />
       )}
 
-      <View style={styles.pie}>
-        <Boton
-          titulo={es.partida.terminarPartida}
-          variante="secundario"
-          onPress={() => {
-            setErrorAlTerminar(false);
-            setConfirmando(true);
-          }}
-        />
-      </View>
+      {/* Las rondas llevan su pie (cambio 125); el Truco, este. */}
+      {esTruco(partida.plantilla) && (
+        <View style={styles.pie}>
+          <Boton titulo={es.partida.terminarPartida} variante="secundario" onPress={pedirTerminar} />
+        </View>
+      )}
 
       {/* RF-710: confirmacion, con aviso si la ronda en curso no se podia cerrar. */}
       <Popup
@@ -312,9 +310,7 @@ const useEstilos = crearEstilos((colores) => ({
     gap: espacios.xs,
     paddingHorizontal: espacios.xl,
     paddingTop: espacios.xs,
-    paddingBottom: espacios.md,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colores.linea,
+    paddingBottom: espacios.sm,
   },
   textosEncabezado: { flexShrink: 1 },
   titulo: { ...tipografia.subtitulo, color: colores.tinta },
