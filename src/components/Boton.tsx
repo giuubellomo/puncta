@@ -1,7 +1,7 @@
 import { Pressable, Text, View } from 'react-native';
 
 import { crearEstilos, useTema } from '@/theme/tema';
-import { AREA_TOCABLE_MINIMA, BORDE, espacios, radios, SOMBRA, tipografia } from '@/theme/tokens';
+import { AREA_TOCABLE_MINIMA, BORDE, espacios, fuentes, radios, SOMBRA, tipografia } from '@/theme/tokens';
 
 export type VarianteBoton = 'primario' | 'destacado' | 'secundario';
 
@@ -12,6 +12,8 @@ interface Props {
   deshabilitado?: boolean;
   /** Un glifo de `theme/iconos` a la izquierda del titulo. */
   icono?: string;
+  /** Una linea mas chica debajo del titulo: «y seguir con Tomi» (cambio 126). */
+  subtitulo?: string;
 }
 
 /**
@@ -20,7 +22,7 @@ interface Props {
  * del color de las tarjetas. Al apretarlo baja y se tapa la sombra.
  * Deshabilitado: apagado y sin sombra, en cualquiera de las tres.
  */
-export function Boton({ titulo, onPress, variante = 'primario', deshabilitado = false, icono }: Props) {
+export function Boton({ titulo, onPress, variante = 'primario', deshabilitado = false, icono, subtitulo }: Props) {
   const styles = useEstilos();
   const { colores } = useTema();
   const fondo = { primario: colores.acento, destacado: colores.destacado, secundario: colores.tarjeta }[variante];
@@ -47,6 +49,11 @@ export function Boton({ titulo, onPress, variante = 'primario', deshabilitado = 
             <Text style={[styles.texto, { color: texto }, deshabilitado && styles.textoDeshabilitado]}>
               {icono !== undefined ? `${icono}  ${titulo}` : titulo}
             </Text>
+            {subtitulo !== undefined && (
+              <Text style={[styles.subtitulo, { color: texto }, deshabilitado && styles.textoDeshabilitado]} numberOfLines={1}>
+                {subtitulo}
+              </Text>
+            )}
           </View>
         </>
       )}
@@ -80,4 +87,5 @@ const useEstilos = crearEstilos((colores) => ({
   deshabilitado: { backgroundColor: colores.superficie, borderColor: colores.linea },
   texto: { ...tipografia.boton, textAlign: 'center' },
   textoDeshabilitado: { color: colores.grisMedio },
+  subtitulo: { ...tipografia.chico, fontFamily: fuentes.cuerpoSemi, textAlign: 'center', opacity: 0.9 },
 }));

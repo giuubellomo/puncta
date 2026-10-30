@@ -283,6 +283,13 @@ export const es = {
       objetivo === undefined ? `Ronda ${ronda}` : `Ronda ${ronda} · ${objetivo}`,
     /** Una regla de asignacion unica que ya tiene otro: al guardar se le saca (cambio 76). */
     laTiene: (nombres: string[]) => `La tiene ${nombres.join(' y ')}`,
+    // Cambio 126: las pastillas, el total que queda y seguir con el proximo
+    laTieneOtro: (regla: string, nombres: string[]) => `«${regla}» la tiene ${nombres.join(' y ')}: si la marcás, se le saca.`,
+    tocaParaEscribir: 'Tocá el número para escribirlo',
+    totalAntes: (puntos: number) => `Total ${puntos < 0 ? `−${Math.abs(puntos)}` : puntos} → `,
+    totalDespues: (puntos: number) => (puntos < 0 ? `−${Math.abs(puntos)}` : String(puntos)),
+    llega: 'llega al objetivo',
+    ySeguirCon: (nombre: string) => `y seguir con ${nombre}`,
     /** Debajo del stepper apagado, cuando se marca la «Cortó» de Carioca (cambio 79). */
     cortoSinPuntaje: 'El que corta no carga puntaje',
     // Solo para el lector de pantalla

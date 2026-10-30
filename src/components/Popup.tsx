@@ -15,8 +15,13 @@ interface Props {
   etiquetaCerrar: string;
   /** Titulo simple: «Agregar participante». */
   titulo?: string;
-  /** En lugar del titulo, un encabezado propio: el avatar y el nombre del popup de carga. */
+  /** En lugar del titulo, un encabezado propio. */
   encabezado?: ReactNode;
+  /**
+   * En lugar del titulo, una franja del color de acento de borde a borde, con la ✕
+   * a la derecha: el personaje y el nombre del popup de carga (cambio 126).
+   */
+  franja?: ReactNode;
   children: ReactNode;
 }
 
@@ -24,7 +29,7 @@ interface Props {
 const SOMBRA_POPUP = 6;
 
 /** Tarjeta centrada sobre un velo oscuro. Para lo corto: alta de participante, carga de puntaje. */
-export function Popup({ visible, onCerrar, etiquetaCerrar, titulo, encabezado, children }: Props) {
+export function Popup({ visible, onCerrar, etiquetaCerrar, titulo, encabezado, franja, children }: Props) {
   const styles = useEstilos();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCerrar} statusBarTranslucent>
@@ -39,20 +44,30 @@ export function Popup({ visible, onCerrar, etiquetaCerrar, titulo, encabezado, c
       >
         <View style={styles.marco}>
           <View style={styles.sombra} />
-          <View style={styles.tarjeta} accessibilityViewIsModal>
-            <View style={styles.encabezado}>
-              <View style={styles.encabezadoContenido}>
-                {encabezado ??
-                  (titulo !== undefined && (
-                    <Text accessibilityRole="header" style={styles.titulo}>
-                      {titulo}
-                    </Text>
-                  ))}
+          {franja !== undefined ? (
+            <View style={[styles.tarjeta, styles.tarjetaConFranja]} accessibilityViewIsModal>
+              <View style={[styles.encabezado, styles.franja]}>
+                <View style={styles.encabezadoContenido}>{franja}</View>
+                <BotonIcono icono={iconos.cerrar} etiqueta={etiquetaCerrar} tamano={32} onPress={onCerrar} />
               </View>
-              <BotonIcono icono={iconos.cerrar} etiqueta={etiquetaCerrar} tamano={32} onPress={onCerrar} />
+              <View style={styles.cuerpo}>{children}</View>
             </View>
-            {children}
-          </View>
+          ) : (
+            <View style={styles.tarjeta} accessibilityViewIsModal>
+              <View style={styles.encabezado}>
+                <View style={styles.encabezadoContenido}>
+                  {encabezado ??
+                    (titulo !== undefined && (
+                      <Text accessibilityRole="header" style={styles.titulo}>
+                        {titulo}
+                      </Text>
+                    ))}
+                </View>
+                <BotonIcono icono={iconos.cerrar} etiqueta={etiquetaCerrar} tamano={32} onPress={onCerrar} />
+              </View>
+              {children}
+            </View>
+          )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -81,6 +96,17 @@ const useEstilos = crearEstilos((colores) => ({
     padding: espacios.xl,
     gap: espacios.md,
   },
+  // La franja va de borde a borde: la tarjeta no lleva padding y el contenido va en `cuerpo`.
+  tarjetaConFranja: { padding: 0, gap: 0, overflow: 'hidden' },
+  franja: {
+    backgroundColor: colores.acento,
+    borderBottomWidth: BORDE,
+    borderBottomColor: colores.borde,
+    paddingLeft: espacios.md,
+    paddingRight: espacios.sm,
+    paddingVertical: espacios.md,
+  },
+  cuerpo: { padding: espacios.lg, gap: espacios.md },
   encabezado: { flexDirection: 'row', alignItems: 'center', gap: espacios.sm },
   encabezadoContenido: { flex: 1 },
   titulo: { ...tipografia.subtitulo, color: colores.tinta },

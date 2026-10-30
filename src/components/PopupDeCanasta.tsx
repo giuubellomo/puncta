@@ -15,12 +15,13 @@ import {
   type Cierre,
   type ManoDeCanasta,
 } from '@/domain/canasta';
+import { siguienteSinCargar } from '@/domain/carga';
 import type { Participante, Partida, RondaJugada } from '@/domain/types';
 import { conSigno, es } from '@/i18n/es';
 import { crearEstilos } from '@/theme/tema';
 import { espacios, fuentes, numerales, tipografia } from '@/theme/tokens';
 
-import { Avatar } from './Avatar';
+import { EncabezadoDeCarga } from './EncabezadoDeCarga';
 import { Boton } from './Boton';
 import { Popup } from './Popup';
 import { Segmented } from './Segmented';
@@ -39,16 +40,18 @@ interface Props {
   onCerrar: () => void;
   /** Escribe la mano en la base. Si falla, deja pasar el error. */
   onGuardar: (mano: ManoDeCanasta) => Promise<void>;
+  /** Cambio 126: despues de guardar, sigue con este en lugar de cerrarse. */
+  onSeguir: (participanteId: string) => void;
 }
 
 /**
  * La calculadora de una mano de Canasta (cambio 101): cierre, canastas limpias
  * y sucias, treses rojos y negros, y los puntos de las cartas bajadas y de las
  * que quedaron en la mano, con el total abajo (orden y treses del cambio 102). Hace las veces del popup de carga para esta
- * plantilla. Como en el, llegar al objetivo se avisa al tocar SIGUIENTE (cambio 120).
+ * plantilla. Como en el, llegar al objetivo se avisa al tocar SIGUIENTE (cambio 120),
+ * lleva la franja de color y GUARDAR sigue con el proximo que falta cargar (cambio 126).
  */
-export function PopupDeCanasta({ visible, partida, numeroRonda, participanteId, onCerrar, onGuardar }: Props) {
-  const styles = useEstilos();
+export function PopupDeCanasta({ visible, partida, numeroRonda, participanteId, onCerrar, onGuardar, onSeguir }: Props) {
   const [apertura, setApertura] = useState(0);
   useEffect(() => {
     if (visible) setApertura((n) => n + 1);
@@ -56,34 +59,30 @@ export function PopupDeCanasta({ visible, partida, numeroRonda, participanteId, 
 
   const participante = partida.participantes.find((p) => p.id === participanteId);
   const ronda = partida.rondas.find((r) => r.numero === numeroRonda);
+  const siguienteId = participante === undefined ? null : siguienteSinCargar(partida, numeroRonda, participante.id);
+  const siguiente = partida.participantes.find((p) => p.id === siguienteId);
   return (
     <Popup
       visible={visible}
       onCerrar={onCerrar}
       etiquetaCerrar={es.comun.cerrar}
-      encabezado={
+      franja={
         participante !== undefined && (
-          <View style={styles.encabezado}>
-            <Avatar tipo={participante.avatarTipo} valor={participante.avatarValor} nombre={participante.nombre} />
-            <View style={styles.textos}>
-              <Text accessibilityRole="header" style={styles.nombre}>
-                {participante.nombre}
-              </Text>
-              <Text style={styles.subtitulo}>{es.ronda.titulo(numeroRonda)}</Text>
-            </View>
-          </View>
+          <EncabezadoDeCarga participante={participante} subtitulo={es.ronda.titulo(numeroRonda)} />
         )
       }
     >
       {participante !== undefined && ronda !== undefined && (
         <Calculadora
-          key={apertura}
+          key={`${apertura}-${participante.id}`}
           partida={partida}
           ronda={ronda}
           participante={participante}
+          siguiente={siguiente?.nombre}
           onGuardar={async (mano) => {
             await onGuardar(mano);
-            onCerrar();
+            if (siguiente === undefined) onCerrar();
+            else onSeguir(siguiente.id);
           }}
         />
       )}
@@ -95,10 +94,12 @@ interface PropsCalculadora {
   partida: Partida;
   ronda: RondaJugada;
   participante: Participante;
+  /** El nombre del que sigue, para el boton: «y seguir con Tomi». */
+  siguiente: string | undefined;
   onGuardar: (mano: ManoDeCanasta) => Promise<void>;
 }
 
-function Calculadora({ partida, ronda, participante, onGuardar }: PropsCalculadora) {
+function Calculadora({ partida, ronda, participante, siguiente, onGuardar }: PropsCalculadora) {
   const styles = useEstilos();
   const entrada = ronda.entradas.find((e) => e.participanteId === participante.id);
   // Corregir una mano arranca de lo que se habia cargado.
@@ -203,7 +204,12 @@ function Calculadora({ partida, ronda, participante, onGuardar }: PropsCalculado
       </View>
 
       {errorAlGuardar && <Text style={styles.error}>{es.comun.errorGuardar}</Text>}
-      <Boton titulo={es.carga.guardar} onPress={guardar} deshabilitado={guardando} />
+      <Boton
+        titulo={es.carga.guardar}
+        subtitulo={siguiente === undefined ? undefined : es.carga.ySeguirCon(siguiente)}
+        onPress={guardar}
+        deshabilitado={guardando}
+      />
     </>
   );
 }
@@ -221,10 +227,6 @@ function Fila({ titulo, puntos, children }: { titulo: string; puntos: number; ch
 }
 
 const useEstilos = crearEstilos((colores) => ({
-  encabezado: { flexDirection: 'row', alignItems: 'center', gap: espacios.sm },
-  textos: { flex: 1, gap: 2 },
-  nombre: { ...tipografia.tituloChico, color: colores.tinta },
-  subtitulo: { ...tipografia.secundario, color: colores.grisOscuro },
   filas: { gap: espacios.xs },
   fila: { flexDirection: 'row', alignItems: 'center', gap: espacios.xs, minHeight: 40 },
   tituloFila: { flex: 1 },

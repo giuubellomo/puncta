@@ -271,6 +271,7 @@ export default function PantallaDePartida() {
           onGuardar={(mano) =>
             mutar(() => partidas.guardarManoDeCanasta(partida.id, carga!.numeroRonda, carga!.participanteId, mano))
           }
+          onSeguir={(participanteId) => setCarga({ numeroRonda: carga!.numeroRonda, participanteId })}
         />
       ) : (
         <PopupDeCarga
@@ -282,6 +283,7 @@ export default function PantallaDePartida() {
           onGuardar={(puntos, reglas) =>
             mutar(() => partidas.guardarCarga(partida.id, carga!.numeroRonda, carga!.participanteId, puntos, reglas))
           }
+          onSeguir={(participanteId) => setCarga({ numeroRonda: carga!.numeroRonda, participanteId })}
         />
       )}
     </SafeAreaView>
