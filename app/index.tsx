@@ -7,8 +7,10 @@ import { Avatar } from '@/components/Avatar';
 import { Boton } from '@/components/Boton';
 import { BotonIcono } from '@/components/BotonIcono';
 import { FondoConEstrellitas } from '@/components/FondoConEstrellitas';
+import { LogoPuncta } from '@/components/LogoPuncta';
 import { Popup } from '@/components/Popup';
 import { SheetDeArmado } from '@/components/SheetDeArmado';
+import { rankear, type Puesto } from '@/domain/ranking';
 import { numeroRondaEnCurso } from '@/domain/rondas';
 import { esTruco } from '@/domain/truco';
 import type { Partida } from '@/domain/types';
@@ -18,11 +20,7 @@ import * as ajustes from '@/repositories/ajustes';
 import * as partidas from '@/repositories/partidas';
 import { iconos } from '@/theme/iconos';
 import { crearEstilos } from '@/theme/tema';
-import { espacios, fuentes, radios, tipografia } from '@/theme/tokens';
-
-/** La tarjeta «Seguir», casi negra en cualquier tema, como en la lamina. */
-const OSCURO = '#141118';
-const CLARO_SOBRE_OSCURO = '#DCC6EE';
+import { BORDE, espacios, fuentes, numerales, radios, tipografia } from '@/theme/tokens';
 
 /**
  * Home (paso 4.2, RF-101 a RF-105; lamina del Home desde el cambio 118).
@@ -44,8 +42,8 @@ export default function Home() {
   const [armando, setArmando] = useState(false);
 
   const { width } = useWindowDimensions();
-  // El logo ocupa el ancho, como en la lamina: «puncta» mide unas 3,2 veces su tamaño de letra.
-  const tamanoLogo = Math.min(128, Math.floor((width - 2 * espacios.xl) / 3.2));
+  // El logo ocupa el ancho, como en la lamina, sin pasarse en una tablet.
+  const anchoLogo = Math.min(420, width - 2 * espacios.xl);
 
   const abrirArmado = () => setArmando(true);
 
@@ -98,14 +96,8 @@ export default function Home() {
       </View>
 
       <View style={styles.marca}>
-        <Text
-          accessibilityRole="header"
-          allowFontScaling={false}
-          style={[styles.titulo, { fontSize: tamanoLogo, lineHeight: Math.round(tamanoLogo * 1.02), letterSpacing: -tamanoLogo * 0.055 }]}
-        >
-          {es.home.titulo}
-        </Text>
-        <Text style={styles.subtitulo}>{es.home.subtitulo}</Text>
+        {/* Cambio 128: el logo dibujado, mas abajo y sin la frase. */}
+        <LogoPuncta ancho={anchoLogo} />
       </View>
 
       {/* El lugar que sobra queda entre el logo y los botones. */}
@@ -115,8 +107,9 @@ export default function Home() {
         {/* Hasta la primera lectura no se dibuja nada: si no, «Seguir» aparece de golpe. */}
         {!cargando && (
           <>
-            <Boton titulo={es.home.nuevoJuego} variante="destacado" onPress={nuevoJuego} />
+            {/* Cambio 128: la partida abierta va primero, arriba de «Nuevo juego». */}
             {partida !== null && <SeguirPartida partida={partida} />}
+            <Boton titulo={es.home.nuevoJuego} variante="destacado" onPress={nuevoJuego} grande />
             <Boton
               titulo={es.home.plantillas}
               icono={iconos.plantillaNueva}
@@ -152,9 +145,15 @@ export default function Home() {
   );
 }
 
+/** Los que van detras del primero que entran al lado; con mas, «+3». */
+const MAXIMO_DETRAS = 3;
+
 /**
- * RF-102, como la lamina: quienes juegan, «Seguir: nombre» y en que ronda va.
- * Abre la partida (7.1).
+ * RF-102 (cambio 128): la partida abierta como una tarjeta clara que muestra
+ * como va, y no como un boton. Arriba el nombre y la ronda; en el medio quien va
+ * ganando, grande, y los demas chiquitos con sus puntos; abajo «Seguir jugando».
+ * Toda la tarjeta abre la partida (7.1). Quien gana lo dice `rankear`, con el
+ * criterio de la plantilla.
  */
 function SeguirPartida({ partida }: { partida: Partida }) {
   const styles = useEstilos();
@@ -162,63 +161,93 @@ function SeguirPartida({ partida }: { partida: Partida }) {
   const ronda = esTruco(partida.plantilla)
     ? partida.plantilla.nombre
     : es.home.rondaDe(numeroRondaEnCurso(partida.rondas), partida.plantilla.rondasIlimitadas ? null : partida.plantilla.rondas.length);
-  // Hasta tres caras, una encima de la otra.
-  const caras = partida.participantes.slice(0, 3);
+  const puestos = rankear(partida);
+  const quien = (puesto: Puesto) => partida.participantes.find((p) => p.id === puesto.participanteId)!;
+  const primeros = puestos.filter((puesto) => puesto.posicion === 1);
+  const detras = puestos.filter((puesto) => puesto.posicion !== 1);
+  const lider = quien(primeros[0]!);
+  const nombresPrimeros = primeros.map((puesto) => quien(puesto).nombre);
+  const puntosPrimeros = puntosCortos(primeros[0]!.total);
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={`${es.home.seguir(partida.nombre)}. ${ronda}`}
+      accessibilityLabel={`${es.home.seguir(partida.nombre)}. ${ronda}. ${es.home.vaGanando(nombresPrimeros.length)} ${nombresPrimeros.join(' y ')}, ${puntosPrimeros}`}
       onPress={() => router.push({ pathname: '/partida/[id]', params: { id: partida.id } })}
       style={({ pressed }) => [styles.seguir, pressed && styles.presionado]}
     >
-      <View style={styles.caras}>
-        {caras.map((p, i) => (
-          <View key={p.id} style={i > 0 && styles.caraPisada}>
-            <Avatar tipo={p.avatarTipo} valor={p.avatarValor} nombre={p.nombre} tamano={32} />
-          </View>
-        ))}
-      </View>
-      <View style={styles.seguirTexto}>
-        <Text style={styles.seguirTitulo} numberOfLines={1}>
-          {es.home.seguir(partida.nombre)}
+      <View style={styles.seguirCabecera}>
+        <Text style={styles.seguirNombre} numberOfLines={1}>
+          {partida.nombre}
         </Text>
         <Text style={styles.seguirRonda} numberOfLines={1}>
           {ronda}
         </Text>
       </View>
-      <Text allowFontScaling={false} style={styles.flecha}>
-        {iconos.adelante}
-      </Text>
+
+      <View style={styles.seguirMedio}>
+        <Avatar tipo={lider.avatarTipo} valor={lider.avatarValor} nombre={lider.nombre} tamano={48} />
+        <View style={styles.seguirLider}>
+          <Text style={styles.seguirEtiqueta}>{es.home.vaGanando(nombresPrimeros.length)}</Text>
+          <Text style={[styles.seguirGanador, numerales]} numberOfLines={1}>
+            {`${nombresPrimeros.join(' y ')} · ${puntosPrimeros}`}
+          </Text>
+        </View>
+        <View style={styles.detras}>
+          {detras.slice(0, MAXIMO_DETRAS).map((puesto) => {
+            const p = quien(puesto);
+            return (
+              <View key={p.id} style={styles.otro}>
+                <Avatar tipo={p.avatarTipo} valor={p.avatarValor} nombre={p.nombre} tamano={32} />
+                <Text style={[styles.puntosOtro, numerales]}>{puntosCortos(puesto.total)}</Text>
+              </View>
+            );
+          })}
+          {detras.length > MAXIMO_DETRAS && (
+            <Text style={styles.masJugadores}>{es.home.masJugadores(detras.length - MAXIMO_DETRAS)}</Text>
+          )}
+        </View>
+      </View>
+
+      <Text style={styles.seguirJugando}>{`${es.home.seguirJugando} ${iconos.adelante}`}</Text>
     </Pressable>
   );
+}
+
+/** Como en el podio: «85», «−40», sin el «+». */
+function puntosCortos(total: number): string {
+  return total < 0 ? `−${Math.abs(total)}` : String(total);
 }
 
 const useEstilos = crearEstilos((colores) => ({
   pantalla: { flex: 1, backgroundColor: colores.fondo, paddingHorizontal: espacios.xl, paddingBottom: espacios.lg },
   arriba: { flexDirection: 'row', justifyContent: 'flex-end', paddingTop: espacios.sm },
-  marca: { gap: espacios.xs },
+  marca: { marginTop: 2 * espacios.xxl + espacios.md, alignItems: 'center' },
   medio: { flex: 1 },
-  titulo: { fontFamily: fuentes.display, color: colores.tinta },
-  subtitulo: { ...tipografia.cuerpoFuerte, color: colores.grisOscuro },
   // Los botones van abajo, al alcance del pulgar; los personajes llenan lo que sobra.
   acciones: { gap: espacios.sm, paddingTop: espacios.md },
   seguir: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: espacios.sm,
     paddingVertical: espacios.sm,
     paddingHorizontal: espacios.md,
     borderRadius: radios.lg,
-    backgroundColor: OSCURO,
+    borderWidth: BORDE,
+    borderColor: colores.borde,
+    backgroundColor: colores.tarjeta,
   },
   presionado: { opacity: 0.85 },
-  caras: { flexDirection: 'row' },
-  caraPisada: { marginLeft: -10 },
-  seguirTexto: { flex: 1, gap: 2 },
-  seguirTitulo: { ...tipografia.cuerpoFuerte, fontFamily: fuentes.cuerpoBold, color: '#FFFFFF' },
-  seguirRonda: { ...tipografia.secundario, color: CLARO_SOBRE_OSCURO },
-  flecha: { ...tipografia.subtitulo, color: colores.destacado },
+  seguirCabecera: { flexDirection: 'row', alignItems: 'baseline', gap: espacios.sm },
+  seguirNombre: { ...tipografia.cuerpoFuerte, fontFamily: fuentes.cuerpoBold, color: colores.tinta, flex: 1 },
+  seguirRonda: { ...tipografia.chico, fontSize: 13, color: colores.grisOscuro },
+  seguirMedio: { flexDirection: 'row', alignItems: 'center', gap: espacios.sm },
+  seguirLider: { flex: 1 },
+  seguirEtiqueta: { ...tipografia.chico, color: colores.grisOscuro },
+  seguirGanador: { ...tipografia.subtitulo, color: colores.tinta },
+  detras: { flexDirection: 'row', alignItems: 'center', gap: espacios.xs },
+  otro: { alignItems: 'center', gap: 2 },
+  puntosOtro: { ...tipografia.chico, fontFamily: fuentes.cuerpoBold, color: colores.grisOscuro },
+  masJugadores: { ...tipografia.chico, fontFamily: fuentes.cuerpoBold, color: colores.grisOscuro },
+  seguirJugando: { ...tipografia.secundario, fontFamily: fuentes.cuerpoBold, color: colores.tinta, textAlign: 'right' },
   textoPopup: { ...tipografia.cuerpo, color: colores.tinta },
   error: { ...tipografia.secundario, color: colores.alerta },
   botonesPopup: { flexDirection: 'row', gap: espacios.sm },

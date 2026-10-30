@@ -41,6 +41,8 @@ export interface Colores {
   /** El fondo del Home y lo que va encima. */
   marca: string;
   sobreMarca: string;
+  /** Las letras del logo del Home, con borde negro (cambio 128). */
+  logo: string;
 }
 
 export type IdTema = 'electrico' | 'noche' | 'chicle';
@@ -91,6 +93,7 @@ export const TEMAS: readonly DefinicionDeTema[] = [
       alerta: '#E8291A',
       marca: '#A52AE6',
       sobreMarca: '#FFFFFF',
+      logo: '#A52AE6',
     },
   },
   {
@@ -113,6 +116,7 @@ export const TEMAS: readonly DefinicionDeTema[] = [
       alerta: '#FF5A4D',
       marca: '#1E0430',
       sobreMarca: '#FFFFFF',
+      logo: '#FF4FD8',
     },
   },
   {
@@ -135,6 +139,8 @@ export const TEMAS: readonly DefinicionDeTema[] = [
       alerta: '#E8291A',
       marca: '#FF4FD8',
       sobreMarca: TINTA,
+      // El acento de Chicle es la tinta: el logo va en el chicle de la marca.
+      logo: '#FF4FD8',
     },
   },
 ];

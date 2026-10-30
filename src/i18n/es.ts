@@ -42,12 +42,12 @@ export const es = {
   },
 
   home: {
-    // El nombre de la app: BELIA hasta el cambio 111, de Bellomo + Pardo
-    /** El logo va en minuscula, como en la lamina «Identidad y nombre» (cambio 113). */
-    titulo: 'puncta',
-    subtitulo: 'Para anotar partidas con amigos.',
     // La tarjeta de la partida abierta, como la lamina (cambio 118)
     seguir: (nombre: string) => `Seguir: ${nombre}`,
+    // Cambio 128: la tarjeta muestra como va
+    vaGanando: (cuantos: number) => (cuantos === 1 ? 'Va ganando' : 'Van ganando'),
+    masJugadores: (n: number) => `+${n}`,
+    seguirJugando: 'Seguir jugando',
     /** «Ronda 4 de 7»; con rondas ilimitadas, «Ronda 4». */
     rondaDe: (ronda: number, total: number | null) => (total === null ? `Ronda ${ronda}` : `Ronda ${ronda} de ${total}`),
     nuevoJuego: 'Nuevo juego',

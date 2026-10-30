@@ -14,6 +14,8 @@ interface Props {
   icono?: string;
   /** Una linea mas chica debajo del titulo: «y seguir con Tomi» (cambio 126). */
   subtitulo?: string;
+  /** Mas alto y con letra mas grande: «Nuevo juego» en el Home (cambio 128). */
+  grande?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ interface Props {
  * del color de las tarjetas. Al apretarlo baja y se tapa la sombra.
  * Deshabilitado: apagado y sin sombra, en cualquiera de las tres.
  */
-export function Boton({ titulo, onPress, variante = 'primario', deshabilitado = false, icono, subtitulo }: Props) {
+export function Boton({ titulo, onPress, variante = 'primario', deshabilitado = false, icono, subtitulo, grande = false }: Props) {
   const styles = useEstilos();
   const { colores } = useTema();
   const fondo = { primario: colores.acento, destacado: colores.destacado, secundario: colores.tarjeta }[variante];
@@ -42,11 +44,12 @@ export function Boton({ titulo, onPress, variante = 'primario', deshabilitado = 
           <View
             style={[
               styles.base,
+              grande && styles.baseGrande,
               { backgroundColor: fondo },
               deshabilitado ? styles.deshabilitado : pressed && styles.apretado,
             ]}
           >
-            <Text style={[styles.texto, { color: texto }, deshabilitado && styles.textoDeshabilitado]}>
+            <Text style={[styles.texto, grande && styles.textoGrande, { color: texto }, deshabilitado && styles.textoDeshabilitado]}>
               {icono !== undefined ? `${icono}  ${titulo}` : titulo}
             </Text>
             {subtitulo !== undefined && (
@@ -83,6 +86,8 @@ const useEstilos = crearEstilos((colores) => ({
     borderRadius: radios.pastilla,
     backgroundColor: colores.borde,
   },
+  baseGrande: { minHeight: 70 },
+  textoGrande: { fontSize: 21, lineHeight: 26 },
   apretado: { transform: [{ translateY: SOMBRA }] },
   deshabilitado: { backgroundColor: colores.superficie, borderColor: colores.linea },
   texto: { ...tipografia.boton, textAlign: 'center' },
